@@ -13,8 +13,6 @@
 #include"mem.h"
 #include"sync.h"
 
-#define BO_DEBUG 1
-
 #if(BO_DEBUG > 0)
 
 #define MUTEX_WRITEFILE L"{8EEEA37C-5CEF-11DD-9810-2A4256D89593}"

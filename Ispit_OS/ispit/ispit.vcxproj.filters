@@ -87,17 +87,11 @@
     <ClInclude Include="relocTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CodeObfuscator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="wsocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CodeObfuscator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -125,9 +119,6 @@
     <ClCompile Include="osenv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="peimage.injector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,6 +135,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WinSecurity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="peimage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -77,7 +77,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CodeObfuscator.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="core.h" />
     <ClInclude Include="coreinject.h" />
@@ -105,7 +104,6 @@
     <ClInclude Include="wsocket.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CodeObfuscator.cpp" />
     <ClCompile Include="core.cpp" />
     <ClCompile Include="crypt.cpp" />
     <ClCompile Include="debug.cpp" />
@@ -115,7 +113,7 @@
     <ClCompile Include="math.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="osenv.cpp" />
-    <ClCompile Include="peimage.injector.cpp" />
+    <ClCompile Include="peimage.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="registry.cpp" />
     <ClCompile Include="str.cpp" />

