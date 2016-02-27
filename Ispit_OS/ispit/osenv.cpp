@@ -9,7 +9,6 @@
 #include "mem.h"
 #include "str.h"
 #include "fs.h"
-#include "registry.h"
 #include "WinAPITypes.h"
 
 void OsEnv::init(void)
@@ -81,21 +80,3 @@ void OsEnv::_getVersionEx(OSINFO *oi)
   }
 }
 
-bool OsEnv::_getUserProfileDirectoryhBySid(PSID sid, LPWSTR buffer)
-{
-	bool retVal = false;
-	LPWSTR sidStr;
-	if(CWA(kernel32, ConvertSidToStringSidW)(sid, &sidStr) != FALSE)
-	{
-		WCHAR regPathFormat[]=L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\%s";
-		WCHAR regPath[MAX_PATH];
-		if(Str::_sprintfW(regPath, MAX_PATH, regPathFormat, sidStr) > 0)
-		{
-			WCHAR regValuePath[]=L"ProfileImagePath";
-			DWORD r = Registry::_getValueAsString(HKEY_LOCAL_MACHINE, regPath, regValuePath, regPath, MAX_PATH);
-			if(r != 0 && r != (DWORD)-1)retVal = Fs::_unquoteAndExpandPath(regPath, buffer);
-		}
-		CWA(kernel32, LocalFree)(sidStr);
-	}
-	return retVal;
-}

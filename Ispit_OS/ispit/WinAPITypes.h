@@ -13,7 +13,6 @@
 #include<ShlObj.h>
 #include<Shlwapi.h>
 #include<OleAuto.h>
-#include"registry.h"
 #include"defines.h"
 
 //////////////////////////////////////////////////////////////////////////

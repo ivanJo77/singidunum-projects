@@ -16,9 +16,7 @@
 #include "process.h"
 #include "winsecurity.h"
 #include "fs.h"
-#include "wsocket.h"
 #include "sync.h"
-#include "registry.h"
 #include "winsecurity.h"
 #include "WinAPITypes.h"
 

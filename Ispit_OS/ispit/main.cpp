@@ -9,6 +9,7 @@
 #include"process.h"
 #include"core.h"
 #include"str.h"
+#include"mem.h"
 #include"peimage.h"
 #include"WinAPITypes.h"
 

@@ -114,14 +114,11 @@
     <ClInclude Include="osenv.h" />
     <ClInclude Include="peimage.h" />
     <ClInclude Include="process.h" />
-    <ClInclude Include="registry.h" />
     <ClInclude Include="str.h" />
     <ClInclude Include="sync.h" />
     <ClInclude Include="time.h" />
     <ClInclude Include="WinAPITypes.h" />
-    <ClInclude Include="wininet.h" />
     <ClInclude Include="winsecurity.h" />
-    <ClInclude Include="wsocket.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core.cpp" />
@@ -135,7 +132,6 @@
     <ClCompile Include="osenv.cpp" />
     <ClCompile Include="peimage.cpp" />
     <ClCompile Include="Process.cpp" />
-    <ClCompile Include="registry.cpp" />
     <ClCompile Include="str.cpp" />
     <ClCompile Include="sync.cpp" />
     <ClCompile Include="time.cpp" />

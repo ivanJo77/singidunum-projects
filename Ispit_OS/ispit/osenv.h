@@ -54,14 +54,4 @@ namespace OsEnv
   */
   void _getVersionEx(OSINFO *oi);
 
-  /*
-    Obtaining directory by user profile SID.
-
-    IN sid     - SID.
-    OUT buffer - buffer for the path, must be at least MAX_PATH.
-
-    Return     - true - path successfully retrieved,
-                 false - path not retrieved.
-  */
-  bool _getUserProfileDirectoryhBySid(PSID sid, LPWSTR buffer);
 };
