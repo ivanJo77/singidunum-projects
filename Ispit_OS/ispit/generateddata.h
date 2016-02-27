@@ -45,7 +45,6 @@ typedef struct
   BYTE  padding1[71];
   DWORD delayStats;                          //Delay information on reporting statisctics.
   BYTE  padding2[32];
-  WCHAR defaultBotnet[BOTNET_MAX_CHARS + 1]; //The default name of a botnet.
   BYTE  padding3[8];
   DWORD delayConfig;                         //Delay information on config retrieval.
   BYTE  padding4[91];
@@ -57,24 +56,10 @@ typedef struct
   BYTE  padding7[2];
 }BASECONFIG;
 
-#if BO_PACKED==1
-typedef unsigned char RELOCTABLEDATA[MAX_SIZE_RELOCATION_DATA];
-
-#pragma pack(push, 1)
-typedef struct{
-	IMAGE_DATA_DIRECTORY relocDirectory; //stores in PE data directory information on relocation section
-	RELOCTABLEDATA relocationTableData;  //to use UPX we need to store original relocation table (.reloc)
-}MISSING_PE_DATA_INFO, *PMISSING_PE_DATA_INFO;
-#pragma pack(pop)
-#endif
-
 typedef struct
 {
   DWORD generateRandomNameWSize;                                 //Size MalwareTools::_GenerateRandomNameW().
   DWORD xorKey;                                                  //Encryption key.
   DWORD updateSize;                                              //Size CoreInstall::_update().
   DWORD installSize;                                             //Size CoreInstall::_install().
-#if BO_PACKED==1
-  MISSING_PE_DATA_INFO relocationInfo;                          //PE data directory info for relocation
-#endif
 }INSTALLDATA;

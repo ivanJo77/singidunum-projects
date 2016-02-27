@@ -81,10 +81,6 @@
 // Various options, depending on the option BO_*.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if(BO_NSPR4 > 0)
-#  define HOOKER_LDRLOADDLL
-#endif
-
 #if(0)
 #  define HOOKER_SETWINDOWTEXT
 #endif
