@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "debug.h"
-#include "generateddata.h"
 #include "core.h"
 #include "osenv.h"
 #include "mem.h"
@@ -316,20 +315,6 @@ static bool __inline initPaths(DWORD flags)
 }
 
 /*
-  Retrieve base configuration data.
-
-  IN flags - flags INITF_*.
-
-  Return   - true - in case of success,
-             false - in case of error.
-*/
-static bool __inline initBaseConfig(DWORD flags)
-{
-  
-  return true;
-}
-
-/*
   Create objects names.
 
   IN flags - flags INITF_*.
@@ -397,20 +382,6 @@ static bool __inline initProcessRights(DWORD flags)
   return true;
 }
 
-/*
-  Setting the hook.
-
-  IN flags - flags INITF_*.
-
-  Return   - true - in case of success,
-             false - in case of error.
-*/
-static bool __inline initHooks(DWORD flags)
-{
-  
-  return true;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Core::init(DWORD flags)
@@ -421,7 +392,7 @@ bool Core::init(DWORD flags)
   //obtain the handles of the main modules (dll).
   if(!initLoadModules(flags))return false;
 
-  //init basic process information (after CryptedDLL has been initialized)
+  //init basic process information
   Process::init();
 
   //Initialize the basic modules.
@@ -464,8 +435,6 @@ bool Core::init(DWORD flags)
 
   //Nulling UserAgent.
   coreData.httpUserAgent = NULL;
-  
-  if(!initBaseConfig(flags))return false;
   
   //Creation of object names.
   if(!initObjects(flags))return false;

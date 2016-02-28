@@ -66,9 +66,6 @@
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="generateddata.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="list.h">
       <Filter>Header Files</Filter>
     </ClInclude>

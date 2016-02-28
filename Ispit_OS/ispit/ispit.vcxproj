@@ -105,7 +105,6 @@
     <ClInclude Include="debug.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fs.h" />
-    <ClInclude Include="generateddata.h" />
     <ClInclude Include="list.h" />
     <ClInclude Include="malwaretools.h" />
     <ClInclude Include="math.h" />

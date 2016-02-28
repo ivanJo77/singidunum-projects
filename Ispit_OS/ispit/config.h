@@ -4,3 +4,9 @@
 
 #define BO_DEBUG 1
 #define MAX_SIZE_RELOCATION_DATA 0
+
+#include "crypt.h"
+typedef struct
+{
+	Crypt::RC4KEY baseKey;
+}BASECONFIG;
