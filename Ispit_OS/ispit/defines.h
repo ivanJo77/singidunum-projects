@@ -6,7 +6,6 @@
 #define PEIMAGE_32                    1
 #define PEIMAGE_64                    0
 #define NTDLL_IMPORT                  0
-#define FS_ALLOW_FILEMAPPING          0
 
 #include "config.h"
 
