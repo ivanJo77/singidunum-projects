@@ -286,16 +286,6 @@ namespace PeImage
   void *_getSectionOfModule(HMODULE module, WORD index, LPDWORD virtualSize);
 
   /*
-    Retrieve section header by it's name.
-
-    IN image       - image (RAW/VA).
-    IN sectionName - name of section to search for.
-
-    Return         - address of the section header, or NULL - in the case of an error.
-  */
-  IMAGE_SECTION_HEADER *_getSectionByName(const void *image, const LPSTR sectionName);
-
-  /*
     Copy the image in another process with application of relocations. Function facilitates and ignores
     correctness of pages, as all the original pages should be readable, otherwise the function
     will return an error.

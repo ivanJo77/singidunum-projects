@@ -789,40 +789,6 @@ void *PeImage::_getSectionOfModule(HMODULE module, WORD index, LPDWORD virtualSi
   return r;
 }
 
-IMAGE_SECTION_HEADER *PeImage::_getSectionByName(const void *image, LPSTR const sectionName)
-{
-  void *r = NULL;
-  IMAGE_SECTION_HEADER *sections;
-  WORD headerType = IMAGE_NT_HEADERS_TYPE(image);
-  WORD numberOfSections;
-
-  if(0){}
-#if(PEIMAGE_32 > 0)
-  else if(headerType == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
-  {
-    IMAGE_NT_HEADERS32 *ntHeader = (IMAGE_NT_HEADERS32 *)IMAGE_GET_NT_HEADERS(image);
-    sections         = (IMAGE_SECTION_HEADER *)((LPBYTE)(&ntHeader->OptionalHeader) + ntHeader->FileHeader.SizeOfOptionalHeader);
-    numberOfSections = ntHeader->FileHeader.NumberOfSections;
-  }
-#elif(PEIMAGE_64 > 0)
-  else if(headerType == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-  {
-    IMAGE_NT_HEADERS64 *ntHeader = (IMAGE_NT_HEADERS64 *)IMAGE_GET_NT_HEADERS(image);
-    sections         = (IMAGE_SECTION_HEADER *)((LPBYTE)(&ntHeader->OptionalHeader) + ntHeader->FileHeader.SizeOfOptionalHeader);
-    numberOfSections = ntHeader->FileHeader.NumberOfSections;
-  }
-#endif
-  else return NULL;
-  
-  int nameLen = Str::_LengthA(sectionName);
-  for(WORD i = 0; i < numberOfSections; i++)
-  {
-    IMAGE_SECTION_HEADER *cur = &sections[i];
-    if(Str::_CompareA((LPSTR)cur->Name, sectionName, Mem::_getL(cur->Name, 0, IMAGE_SIZEOF_SHORT_NAME) == NULL ? IMAGE_SIZEOF_SHORT_NAME : -1, nameLen) == 0)return cur;
-  }
-  return NULL;
-}
-
 void *PeImage::_copyModuleToProcess(HANDLE process, void *image)
 {
 #if defined _WIN64
