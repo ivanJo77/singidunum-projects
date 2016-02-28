@@ -12,16 +12,6 @@
 #define LOWINTEGRITYLEVEL_FULLACCESS         L"S:(ML;;NRNWNX;;;LW)"
 #define LOWINTEGRITYLEVEL_FULLACCESS_INHERIT L"S:(ML;CIOI;NRNWNX;;;LW)"
 
-void WinSecurity::init(void)
-{
-
-}
-
-void WinSecurity::uninit(void)
-{
-
-}
-
 void *WinSecurity::_getFullAccessDescriptors(SECURITY_ATTRIBUTES *sa, SECURITY_DESCRIPTOR *sd)
 {
 	if(CWA(advapi32, InitializeSecurityDescriptor)(sd, SECURITY_DESCRIPTOR_REVISION) && CWA(advapi32, SetSecurityDescriptorDacl)(sd, TRUE, NULL, FALSE))

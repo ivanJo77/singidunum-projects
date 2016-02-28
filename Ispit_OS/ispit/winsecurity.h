@@ -6,16 +6,6 @@
 namespace WinSecurity
 {
   /*
-    Init.
-  */
-  void init(void);
-
-  /*
-    Uninit.
-  */
-  void uninit(void);
-
-  /*
     Create SECURITY_ATTRIBUTES and SECURITY_DESCRIPTOR with full access.
 
     OUT sa - pointer to SECURITY_ATTRIBUTES, can be NULL, if meaning is not necessary.

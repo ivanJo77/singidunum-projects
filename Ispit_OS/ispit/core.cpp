@@ -274,9 +274,6 @@ bool Core::init(DWORD flags)
   //obtain the handles of the main modules (dll).
   if(!initLoadModules(flags))return false;
 
-  //init basic process information
-  Process::init();
-
   //Initialize the basic modules.
   Mem::init(512 * 1024);
   

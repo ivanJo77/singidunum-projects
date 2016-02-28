@@ -19,25 +19,6 @@ namespace Process
     INTEGRITY_HIGH     //Administrative (Process can install files to the Program Files folder and write to sensitive registry areas like HKEY_LOCAL_MACHINE.)
   };
   
-  //flags for showShellRunDialog().
-  enum
-  {
-    RFD_NOBROWSE        = 0x00000001, //Do not display the "Browse".
-    RFD_NODEFFILE       = 0x00000002, //Do not select the default file.
-    RFD_USEFULLPATHDIR  = 0x00000004, //Use the working directory of the executable file path (ignored if workingDir! = NULL).
-    RFD_NOSHOWOPEN      = 0x00000008  //Do not display a label for the Edit.
-  };
-
-  /*
-    Init.
-  */
-  void init(void);
-
-  /*
-    Uninit.
-  */
-  void uninit(void);
-
   /*
     Retrieve a handle of the kernel32 module from the PE file.
 
@@ -97,16 +78,5 @@ namespace Process
 #if !defined _WIN64
   bool _isWow64(HANDLE process);
 #endif
-
-  /*
-    Wrapper for CreateThread().
-
-    IN stackSize    - stack size.
-    IN startAddress - entry point. 
-    IN parameter    - parameter.
-
-    Return          - ID thread, or 0 in case of error.
-  */
-  DWORD _createThread(SIZE_T stackSize, LPTHREAD_START_ROUTINE startAddress, LPVOID parameter);
 
 };

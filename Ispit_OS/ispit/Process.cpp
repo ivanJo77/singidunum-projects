@@ -8,16 +8,6 @@
 #include "process.h"
 #include "winsecurity.h"
 
-void Process::init(void)
-{
-
-}
-
-void Process::uninit(void)
-{
-
-}
-
 HMODULE ASM_INTERNAL_DEF Process::_getKernel32Handle(void)
 {
 #if defined _WIN64
@@ -177,16 +167,4 @@ bool Process::_isWow64(HANDLE process)
 }
 #endif
 
-DWORD Process::_createThread(SIZE_T stackSize, LPTHREAD_START_ROUTINE startAddress, LPVOID parameter)
-{
-	DWORD id;
-	HANDLE thread = CWA(kernel32, CreateThread)(NULL, stackSize, startAddress, parameter, 0, &id);
-	if(thread != NULL)
-	{
-		CWA(kernel32, CloseHandle)(thread);
-		return id;
-	}
-
-	return 0;
-}
 
