@@ -112,7 +112,6 @@
     <ClInclude Include="process.h" />
     <ClInclude Include="str.h" />
     <ClInclude Include="sync.h" />
-    <ClInclude Include="time.h" />
     <ClInclude Include="winsecurity.h" />
   </ItemGroup>
   <ItemGroup>
@@ -126,7 +125,6 @@
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="str.cpp" />
     <ClCompile Include="sync.cpp" />
-    <ClCompile Include="time.cpp" />
     <ClCompile Include="WinSecurity.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
