@@ -8,7 +8,6 @@
 #include "config.h"
 #include "debug.h"
 #include "core.h"
-#include "osenv.h"
 #include "mem.h"
 #include "str.h"
 #include "peimage.h"
@@ -184,38 +183,12 @@ static bool __inline initOsBasic(DWORD flags)
   {
     //Preserved when you copy a Module.
   }
-
-  //Windows version.
-  {
-	OsEnv::OSINFO oi;
-	OsEnv::_getVersionEx(&oi);
-
-	coreData.winVersion = oi.version;
-	switch(oi.architecture)
-	{
-		case PROCESSOR_ARCHITECTURE_IA64:
-		case PROCESSOR_ARCHITECTURE_AMD64:
-			coreData.is64bitOS=true;
-			break;
-		default:
-			coreData.is64bitOS=false;
-	}
-    if(coreData.winVersion < OsEnv::VERSION_XP)
-    {
-      WDEBUG1(WDDT_ERROR, "Bad windows version %u.", coreData.winVersion);
-      return false;
-    }
-  }
   
   //Retrieving IntegrityLevel.
   if((coreData.integrityLevel = Process::_getIntegrityLevel(CURRENT_PROCESS)) == Process::INTEGRITY_UNKNOWN)
   {
-    if(coreData.winVersion < OsEnv::VERSION_VISTA)coreData.integrityLevel = Process::INTEGRITY_MEDIUM;
-    else
-    {
-      WDEBUG0(WDDT_ERROR, "Unknown integrity level.");
-      return false;
-    }
+		//WinXP case
+    coreData.integrityLevel = Process::INTEGRITY_MEDIUM;
   }
   if((flags & Core::INITF_INJECT_START) == 0 && coreData.integrityLevel < Process::INTEGRITY_MEDIUM)
   {

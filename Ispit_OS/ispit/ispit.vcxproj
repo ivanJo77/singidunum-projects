@@ -110,7 +110,6 @@
     <ClInclude Include="math.h" />
     <ClInclude Include="mem.h" />
     <ClInclude Include="ntdll.h" />
-    <ClInclude Include="osenv.h" />
     <ClInclude Include="peimage.h" />
     <ClInclude Include="process.h" />
     <ClInclude Include="str.h" />
@@ -128,7 +127,6 @@
     <ClCompile Include="malwaretools.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="mem.cpp" />
-    <ClCompile Include="osenv.cpp" />
     <ClCompile Include="peimage.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="str.cpp" />

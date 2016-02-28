@@ -39,9 +39,6 @@
     <ClInclude Include="ntdll.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="osenv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="peimage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -96,9 +93,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="osenv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Process.cpp">

@@ -1,6 +1,7 @@
 #pragma once
 /*
   A set of definitions for ntdll.dll
+	Taken from MSDN
 */
 
 #if !defined NTDLL_IMPORT
