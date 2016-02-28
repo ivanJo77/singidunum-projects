@@ -16,15 +16,6 @@ namespace Math
   void Uninit(void);
 
 #if !defined _WIN64
-  /*
-    The division of the 64-bit signed number (Only available in Win32).
-
-    IN dwA - dividend.
-    IN dwB - divisor.
-
-    Return - result.
-  */
-  __int64 ASM_INTERNAL_DEF _divI64(__int64 dwA, __int64 dwB);
 
   /*
     The division of the 64-bit unsigned number (Only available in Win32).
@@ -35,16 +26,6 @@ namespace Math
 	Return - result.
   */
   DWORD64 ASM_INTERNAL_DEF _divU64(DWORD64 dwA, DWORD64 dwB);
-
-  /*
-    Retrieve a division reminder of signed 64-bit integers
-
-	IN dwA - dividend.
-	IN dwB - divisor.
-
-	Return - result.
-  */
-  __int64 ASM_INTERNAL_DEF _modI64(__int64 dwA, __int64 dwB);
 
   /*
     Retrieve a division reminder of unsigned 64-bit integers
