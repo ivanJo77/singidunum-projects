@@ -54,9 +54,6 @@
     <ClInclude Include="time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinAPITypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="winsecurity.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -115,7 +115,6 @@
     <ClInclude Include="str.h" />
     <ClInclude Include="sync.h" />
     <ClInclude Include="time.h" />
-    <ClInclude Include="WinAPITypes.h" />
     <ClInclude Include="winsecurity.h" />
   </ItemGroup>
   <ItemGroup>

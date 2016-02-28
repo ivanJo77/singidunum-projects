@@ -15,9 +15,6 @@
 //The size of the buffer in characters for the registry value.
 #define CORE_REGISTRY_VALUE_BUFFER_SIZE 10       
 
-//The size of the buffer in characters for the registry key.
-#define CORE_REGISTRY_KEY_BUFFER_SIZE (sizeof(PATH_REGKEY) + CORE_REGISTRY_VALUE_BUFFER_SIZE + 1)
-
 //The settings are stored in the PE file.
 #pragma pack(push, 1)
 typedef struct
@@ -39,7 +36,6 @@ typedef struct
     char regLocalSettings[CORE_REGISTRY_VALUE_BUFFER_SIZE]; //The registry value to store settings.
   }userPaths;
 
-  DWORD processInfecionId; //ID to generate the mutex infected processes.
   DWORD storageArrayKey;   //XOR key for storing reports.
 }PESETTINGS;
 #pragma pack(pop)

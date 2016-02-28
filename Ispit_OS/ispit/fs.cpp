@@ -9,7 +9,6 @@
 #include "time.h"
 #include "mem.h"
 #include "str.h"
-#include "WinAPITypes.h"
 #include "crypt.h"
 
 #define TEMPFILE_DEFAULT_PREFIX L"tmp"

@@ -8,7 +8,6 @@
 #include "winsecurity.h"
 #include "process.h"
 #include "mem.h"
-#include "WinAPITypes.h"
 
 #define LOWINTEGRITYLEVEL_FULLACCESS         L"S:(ML;;NRNWNX;;;LW)"
 #define LOWINTEGRITYLEVEL_FULLACCESS_INHERIT L"S:(ML;CIOI;NRNWNX;;;LW)"

