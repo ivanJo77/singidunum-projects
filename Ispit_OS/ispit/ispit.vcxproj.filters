@@ -30,9 +30,6 @@
     <ClInclude Include="fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="malwaretools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="mem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,9 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="malwaretools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="math.cpp">

@@ -8,9 +8,8 @@
 */
 #pragma once
 
-#include "malwaretools.h"
 #include "ntdll.h"
-#include "wininet.h"
+#include "crypt.h"
 
 //The size of the buffer in characters for the registry value.
 #define CORE_REGISTRY_VALUE_BUFFER_SIZE 10       

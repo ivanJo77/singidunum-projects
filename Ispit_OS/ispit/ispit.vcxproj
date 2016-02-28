@@ -106,7 +106,6 @@
     <ClInclude Include="defines.h" />
     <ClInclude Include="fs.h" />
     <ClInclude Include="list.h" />
-    <ClInclude Include="malwaretools.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="mem.h" />
     <ClInclude Include="ntdll.h" />
@@ -123,7 +122,6 @@
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="fs.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="malwaretools.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="peimage.cpp" />
