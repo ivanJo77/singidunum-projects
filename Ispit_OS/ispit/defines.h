@@ -7,8 +7,6 @@
 #define PEIMAGE_64                    0
 #define NTDLL_IMPORT                  0
 
-#include "config.h"
-
 //Prefixes for functions that are entirely written in asm.
 #if defined _WIN64
 #  define ASM_INTERNAL_DEF

