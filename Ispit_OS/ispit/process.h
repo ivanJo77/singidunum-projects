@@ -39,17 +39,6 @@ namespace Process
   void uninit(void);
 
   /*
-    Retrieve a handle of the process module.
-
-    IN process    - process. Required permissions PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
-    IN moduleName - module name to search. Can be either the base name or fully qualified.
-
-    Return        - module handle, or NULL if not found.
-  */
-  HMODULE _getModuleHandle(HANDLE process, LPWSTR moduleName);
-
-
-  /*
     Retrieve a handle of the kernel32 module from the PE file.
 
     Return        - kernel32 module handle, or NULL if not found.
@@ -75,15 +64,6 @@ namespace Process
     Return        - data SID (must be freed by Mem), or NULL on error.
   */
   TOKEN_USER *_getUserByProcessId(DWORD id, LPDWORD sessionId);
-
-  /*
-    Count of threads within process.
-
-    IN id  - ID of process.
-    
-    Return - number of threads, or (DWORD)-1 in case of error.
-  */
-  DWORD _getCountOfThreadsByProcessId(DWORD id);
 
   /*
     Setting privileges for the current thread or process.
@@ -119,84 +99,6 @@ namespace Process
 #endif
 
   /*
-    Create of a new process.
-
-    IN module      - module name, may be NULL.
-    IN commandLine - command line, may be NULL. The specified address can not be a constant!
-    IN workDir     - working directory of the new process, may be NULL.
-    IN starupInfo  - STARTUPINFO, may be NULL.
-    OUT pi         - PROCESS_INFORMATION, may be NULL.
-
-    Return         - ID of process - in case of success,
-                     0 - in case of error.
-  */
-  DWORD _create(const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi);
-
-  /*
-    Extended _create(), which creates a process with the command line, where the first argument 
-	is the name of the module. That is, in the most frequently used form of running processes, 
-	it is recommended to use exactly this function instead of _create(), this is due to the 
-	stupidity of some decoders that always put in the first argument, the process name.
-
-    IN module      - module name, may not be NULL.
-    IN commandLine - command line, may be NULL. The specified address can not be a constant!
-    IN workDir     - working directory, may be NULL.
-    IN starupInfo  - STARTUPINFO, may be NULL.
-    OUT pi         - PROCESS_INFORMATION, may be NULL.
-
-	Return         - ID of process - in case of success,
-					 0 - in case of error.
-  */
-  DWORD _createEx(const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo,  PROCESS_INFORMATION *pi);
-
-
-  /*
-    Create of a new process.
-
-    IN token       - a primary user token is created for the process. Required permissions:
-                     TOKEN_QUERY, TOKEN_DUPLICATE, TOKEN_ASSIGN_PRIMARY.
-    IN desktop     - Desktop in the format "machine\desktop". may be NULL. It makes no sense if
-                     starupInfo != NULL.
-    IN module      - module name, may be NULL.
-    IN commandLine - command line, may be NULL. The specified address can not be a constant!
-    IN workDir     - working directory of new process, may be NULL.
-    IN starupInfo  - STARTUPINFO, may be NULL.
-    OUT pi         - PROCESS_INFORMATION, may be NULL.
-
-	Return         - ID of process - in case of success,
-					 0 - in case of error.
-  */
-  DWORD _createAsUser(HANDLE token, const LPWSTR desktop, const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi);
-
-  /*
-    Extended _createAsUser(), which creates a process with the command line, where the first argument 
-	is the name of the module. That is, in the most frequently used form of running processes, it is 
-	recommended to useexactly this function instead _createAsUser(), this is due to the stupidity of 
-	some decoders that always put in the first argument, the process name.
-
-    IN token       - primary user token is created for the process. Required permissions:
-                     TOKEN_QUERY, TOKEN_DUPLICATE, TOKEN_ASSIGN_PRIMARY.
-    IN desktop     - Desktop in the format "machine\desktop". may be NULL. It makes no sense if
-                     starupInfo != NULL.
-    IN module      - module name, may be NULL.
-    IN commandLine - command line, may be NULL. The specified address can not be a constant!
-    IN workDir     - working directory of new process, may be NULL.
-    IN starupInfo  - STARTUPINFO, may be NULL.
-    OUT pi         - PROCESS_INFORMATION, may be NULL.
-
-	Return         - ID of process - in case of success,
-					 0 - in case of error.
-  */
-  DWORD _createAsUserEx(HANDLE token, const LPWSTR desktop, const LPWSTR module, const LPWSTR commandLine, const LPWSTR workDir, const STARTUPINFOW *starupInfo, PROCESS_INFORMATION *pi);
-
-  /*
-    Closing the handles and zeroing PROCESS_INFORMATION.
-
-    IN OUT pi - PROCESS_INFORMATION.
-  */
-  void _closeProcessInformation(PROCESS_INFORMATION *pi);
-  
-  /*
     Wrapper for CreateThread().
 
     IN stackSize    - stack size.
@@ -207,34 +109,4 @@ namespace Process
   */
   DWORD _createThread(SIZE_T stackSize, LPTHREAD_START_ROUTINE startAddress, LPVOID parameter);
 
-  /*
-    Calling the standard Run dialog (RunFileDlg).
-
-    IN owner      - parent, may be NULL.
-    IN workingDir - working directory, may be NULL.
-    IN title      - dialog title, may be NULL for default value.
-    IN promt      - dialog prompt, may be NULL for default value.
-    IN flags      - flags RFD_*.
-  */
-  void _showShellRunDialog(HWND owner, const LPWSTR workingDir, const LPWSTR title, const LPWSTR promt, DWORD flags);
-
-  /*
-    Remove batch file.
-
-    IN fileForRemoving - the full name of the file to delete.
-
-    Return             - true - in case of success,
-                         false - in case of error.
-  */
-  bool _runBatchForRemoveFile(const LPWSTR fileForRemoving);
-
-  /*
-    Running bat-file with arbitrary content and it's removal.
-
-    IN context - contents of a file encoded in OEM, will add an additional prefix and postfix.
-    
-	Return     - true - in case of success,
-				 false - in case of error.
-  */
-  bool _runTempBatch(const LPSTR context);
 };

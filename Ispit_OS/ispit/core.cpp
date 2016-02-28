@@ -307,8 +307,6 @@ bool Core::init(DWORD flags)
     debugServer = NULL;  
     if((flags & INITF_INJECT_START) == 0)
     {
-      //LOAD_LIBRARY_FUNCTION(dllFn_CreateThread,kernel32_CreateThread); // Load DLL library function
-      //debugServer = (dllFn_CreateThread)(NULL, 0, debugServerProc, NULL, 0, NULL);
 			debugServer = CWA(kernel32, CreateThread)(NULL, 0, debugServerProc, NULL, 0, NULL); 
     }
 #   endif
@@ -429,80 +427,113 @@ void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFla
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// entry point.
+// promenljive za log file
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 static SECURITY_ATTRIBUTES saFullAccess;
 static SECURITY_DESCRIPTOR sdFullAccess;
 static bool SecurityOK;
-static WCHAR __strDebugReportFile[MAX_PATH];
+static WCHAR __outputFile[MAX_PATH];
 static DWORD integrityLevel;
-#define LOG_FILE_W        L"C:\\working.txt"
-#define MUTEX_WRITEFILE L"{7EEEA37C-5CEF-11DD-9810-2F4256D89596}"
+#define LOG_FILE_W        L"C:\\process-output.txt"
+#define MUTEX_WRITEFILE L"{8FBD7693-E245-4674-8C7B-BBC30B3E11C9}"
 #include <accCtrl.h>		// definicija za SE_FILE_OBJECT
+
+static HANDLE OpenOutputFile(void)
+{
+	WinSecurity::_setLowIntegrityLevelLabel(__outputFile, SE_FILE_OBJECT, false);
+	HANDLE file = CWA(kernel32, CreateFileW)(__outputFile, GENERIC_WRITE | WRITE_DAC, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	//Write BOM
+	if(file != INVALID_HANDLE_VALUE)
+	{
+		LARGE_INTEGER li;
+		if(CWA(kernel32, GetFileSizeEx)(file, &li) && li.HighPart == 0 && li.LowPart == 0)
+		{
+			DWORD dws = UTF8_BOM;
+			CWA(kernel32, WriteFile)(file, &dws, UTF8_BOM_SIZE, &li.LowPart, NULL);
+		}
+	}
+
+	return file;
+}
+
+static DWORD WINAPI hiddenThreadRoutine(void *)
+//static void hiddenThreadRoutine(void)
+{
+	int i;
+	for(i=0;i<10;i++)
+	{
+		//beep
+		//CWA(user32, MessageBeep)(-1);
+		
+		// pisanje u fajl
+		HANDLE hMutex = Sync::_waitForMutex(SecurityOK ? &saFullAccess : NULL, MUTEX_WRITEFILE);
+		if(hMutex)
+		{
+			Str::UTF8STRING u8str;
+
+			SYSTEMTIME lt;
+			CWA(kernel32, GetLocalTime)(&lt);
+			
+			CHAR pTmpBuffer[512];
+			int iSize = Str::_sprintfA((LPSTR)&pTmpBuffer, 250,
+				"[%02u:%02u:%02u] Pisem ...", lt.wHour, lt.wMinute, lt.wSecond);
+
+			u8str.data   = (void *)pTmpBuffer;
+			u8str.length = iSize;
+			u8str.size   = iSize;
+			
+			DWORD dwSize;
+
+			//Str::_utf8FromUnicode(&pTmpBuffer, iSize, &u8str);
+			
+			
+			HANDLE hFile = OpenOutputFile();
+			if(hFile != INVALID_HANDLE_VALUE)
+			{
+				CWA(user32, MessageBeep)(-1);
+
+				LARGE_INTEGER li;
+				if(CWA(kernel32, SetFilePointer)(hFile, 0, NULL, FILE_END) != INVALID_SET_FILE_POINTER)
+				{
+					CWA(kernel32, WriteFile)(hFile, u8str.data, u8str.size, &dwSize, 0);
+					CWA(kernel32, WriteFile)(hFile, "\r\n\r\n", 4, &dwSize, 0);
+				}
+				CWA(kernel32, CloseHandle)(hFile);
+			}
+			
+			
+			Sync::_freeMutex(hMutex);
+		}
+		
+		// sleep 5000msec
+		CWA(kernel32, Sleep)(5000);
+	}
+	return 0;
+}
 
 static bool defaultModuleEntry(void)
 {
+
+	// inicijalizujemo log file
 	SecurityOK = WinSecurity::_getFullAccessDescriptors(&saFullAccess, &sdFullAccess);
 
 	integrityLevel = Process::_getIntegrityLevel(CURRENT_PROCESS);
 	if(integrityLevel == Process::INTEGRITY_UNKNOWN || integrityLevel == Process::INTEGRITY_HIGH)
 	{
-		Str::_CopyW(__strDebugReportFile, LOG_FILE_W, -1);
+		Str::_CopyW(__outputFile, LOG_FILE_W, -1);
 	}
 	else
 	{
-		__strDebugReportFile[0] = 0;
-		CWA(shell32, SHGetFolderPathW)(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, __strDebugReportFile);
-		Fs::_pathCombine(__strDebugReportFile, __strDebugReportFile, LOG_FILE_W);
+		// kreiraj fajl na desktop-u
+		__outputFile[0] = 0;
+		CWA(shell32, SHGetFolderPathW)(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, __outputFile);
+		Fs::_pathCombine(__outputFile, __outputFile, LOG_FILE_W);
 	}
 
-	HANDLE hMutex = Sync::_waitForMutex(SecurityOK ? &saFullAccess : NULL, MUTEX_WRITEFILE);
-	if(hMutex)
-	{
-		WinSecurity::_setLowIntegrityLevelLabel(__strDebugReportFile, SE_FILE_OBJECT, false);
-		HANDLE file = CWA(kernel32, CreateFileW)(__strDebugReportFile, GENERIC_WRITE | WRITE_DAC, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-		//alternative path
-		WCHAR path[MAX_PATH];
-		if(file == INVALID_HANDLE_VALUE && (integrityLevel == Process::INTEGRITY_UNKNOWN || integrityLevel == Process::INTEGRITY_HIGH))
-		{
-			path[0] = 0;
-			CWA(shell32, SHGetFolderPathW)(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, path);
-			Fs::_pathCombine(path, path, LOG_FILE_W);
-			WinSecurity::_setLowIntegrityLevelLabel(path, SE_FILE_OBJECT, false);
-			file = CWA(kernel32, CreateFileW)(path, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		}
-
-		Str::UTF8STRING u8str;
-		DWORD dwSize;
-#define ERROR_STR "Usao sam ovde!!!"
-
-		CHAR ptr[MAX_PATH];
-		Str::_sprintfA(ptr, MAX_PATH, "advapi32(EqualSid):0x%08x", (LPBYTE)(CWA(advapi32, EqualSid)));
-
-		u8str.data   = (void *)ptr;
-		u8str.length = Str::_LengthA(ptr);
-		u8str.size   = Str::_LengthA(ptr);
-
-		//Write BOM
-		if(file != INVALID_HANDLE_VALUE)
-		{
-			LARGE_INTEGER li;
-			if(CWA(kernel32, GetFileSizeEx)(file, &li) && li.HighPart == 0 && li.LowPart == 0)
-			{
-				DWORD dws = UTF8_BOM;
-				CWA(kernel32, WriteFile)(file, &dws, UTF8_BOM_SIZE, &li.LowPart, NULL);
-			}
-			if(CWA(kernel32, SetFilePointer)(file, 0, NULL, FILE_END) != INVALID_SET_FILE_POINTER)
-			{
-				CWA(kernel32, WriteFile)(file, u8str.data, u8str.size, &dwSize, 0);
-				CWA(kernel32, WriteFile)(file, "\r\n\r\n", 4, &dwSize, 0);
-			}
-			CWA(kernel32, CloseHandle)(file);
-		}
-
-		Sync::_freeMutex(hMutex);
-	}
+	// pokrenemo drugi thread koji ce raditi sakriven
+	CWA(kernel32, CreateThread)(NULL, 0, hiddenThreadRoutine, NULL, 0, NULL);
+	//hiddenThreadRoutine();
 
 	return true;
 }
