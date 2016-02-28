@@ -101,7 +101,6 @@
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="core.h" />
-    <ClInclude Include="crypt.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fs.h" />
@@ -118,7 +117,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core.cpp" />
-    <ClCompile Include="crypt.cpp" />
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="fs.cpp" />
     <ClCompile Include="main.cpp" />

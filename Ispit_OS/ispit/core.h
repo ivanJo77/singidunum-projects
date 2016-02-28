@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "ntdll.h"
-#include "crypt.h"
 
 //The structure contains the basic data of the current process.
 typedef struct
@@ -32,11 +31,11 @@ typedef struct
 
   struct
   {
-    /*on_all*/LPWSTR process;         //The full path of the current file.
+    LPWSTR process;         //The full path of the current file.
   }paths;
 
-  /*on_all*/BYTE integrityLevel;        //The application level.
-  /*on_all*/DWORD pid;                  //process ID.
+  BYTE integrityLevel;        //The application level.
+  DWORD pid;                  //process ID.
   
 }COREDATA;
 extern COREDATA coreData;

@@ -279,7 +279,6 @@ bool Core::init(DWORD flags)
 
   //Initialize the basic modules.
   Mem::init(512 * 1024);
-  Crypt::init();
   
   //Preparing to output debugging information.
 # if(BO_DEBUG > 0)
