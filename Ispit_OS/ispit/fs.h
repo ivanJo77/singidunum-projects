@@ -328,21 +328,6 @@ namespace Fs
   typedef bool (FINDFILEPROC)(const LPWSTR path, const WIN32_FIND_DATAW *fileInfo, void *data);
   
   /*
-    Search for files in a directory.
-
-    IN path           - path.
-    IN fileMasks      - an array of masks to search.
-    IN fileMasksCount - number of elements in fileMasks.
-    IN flags          - flags FFFLAG_*.
-    IN findFileProc   - function to call for each file.
-    IN data           - arbitrary data.
-    IN stopEvent      - Event interrupt the search, or NULL.
-    IN subfolderDelay - delay before looking for a subdirectory.
-    IN foundedDelay   - delay after the call findFileProc.
-  */
-  void _findFiles(LPWSTR path, const LPWSTR *fileMasks, DWORD fileMasksCount, DWORD flags, FINDFILEPROC findFileProc, void *data, HANDLE stopEvent, DWORD subfolderDelay, DWORD foundedDelay);
-
-  /*
     Removes quotation marks and replace the environment variables with their values.
 
     IN path    - path to process.

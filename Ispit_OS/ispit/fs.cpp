@@ -418,49 +418,6 @@ bool Fs::_removeDirectoryTree(LPWSTR path)
   return CWA(kernel32, RemoveDirectoryW)(path) == FALSE ? false : true;
 }
 
-void Fs::_findFiles(LPWSTR path, const LPWSTR *fileMasks, DWORD fileMasksCount, DWORD flags, FINDFILEPROC findFileProc, void *data, HANDLE stopEvent, DWORD subfolderDelay, DWORD foundedDelay)
-{
-  WCHAR curPath[MAX_PATH];
-  WIN32_FIND_DATAW wfd;
-  HANDLE handle;
-
-  if(_pathCombine(curPath, path, L"*") && (handle = CWA(kernel32, FindFirstFileW)(curPath, &wfd)) != INVALID_HANDLE_VALUE)
-  {
-    do 
-    {
-      if(stopEvent != NULL && CWA(kernel32, WaitForSingleObject)(stopEvent, 0) != WAIT_TIMEOUT)break;
-      
-      if(!_isDotsName(wfd.cFileName))
-      {
-        //comparison.
-        if((wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && flags & FFFLAG_SEARCH_FOLDERS) ||
-          (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && flags & FFFLAG_SEARCH_FILES))
-        {
-          for(DWORD i = 0; i < fileMasksCount; i++)if(CWA(shlwapi, PathMatchSpecW)(wfd.cFileName, fileMasks[i]) != FALSE)
-          {
-            if(!findFileProc(path, &wfd, data))goto END;
-            if(foundedDelay != 0)CWA(kernel32, Sleep)(foundedDelay);
-            break;
-          }
-        }
-      
-        //go in subfolder.
-        if(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && flags & FFFLAG_RECURSIVE)
-        {
-          if(_pathCombine(curPath, path, wfd.cFileName))
-          {
-            if(subfolderDelay != 0)CWA(kernel32, Sleep)(subfolderDelay);
-            _findFiles(curPath, fileMasks, fileMasksCount, flags, findFileProc, data, stopEvent, subfolderDelay, foundedDelay);
-          }
-        }
-      }
-    }
-    while(CWA(kernel32, FindNextFileW)(handle, &wfd) != FALSE);
-END:
-    CWA(kernel32, FindClose)(handle);
-  }
-}
-
 bool Fs::_unquoteAndExpandPath(LPWSTR path, LPWSTR buffer)
 {
   CWA(shlwapi, PathUnquoteSpacesW)(path);
