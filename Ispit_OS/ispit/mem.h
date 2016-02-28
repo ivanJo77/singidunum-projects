@@ -1,9 +1,5 @@
 /*
   Working with memory Windows 32/64 based on the Heap.
-
-  Note: These functions are primarily designed for stability, so have the following
-		properties:
-			1. Allocates a block of memory required is filled with zeros.
 */
 
 #pragma once
@@ -15,13 +11,6 @@
 #if !defined MEM_ALLOC_SAFE_BYTES
 #  error MEM_ALLOC_SAFE_BYTES not defined!
 #endif
-
-//Structure to specify the parameters of the memory storage
-typedef struct
-{
-  void *data;
-  SIZE_T size;
-}MEMDATA;
 
 //structure offset.
 #define OFFSETOF(v, m)  ((DWORD_PTR)(&((v *)(NULL))->m))
@@ -126,26 +115,6 @@ namespace Mem
   void ASM_INTERNAL_DEF _copy(void *dest, const void *source, SIZE_T size);
 
   /*
-    Copy a block of memory from the end of the memory block.
-
-	OUT dest  - memory address in which to copy bytes.
-	IN source - source memory address.
-	IN size   - number of bytes to copy.
-  */
-  void _copyFromEnd(void *dest, const void *source, SIZE_T size);
-
-  /*
-    Copy a block of memory, wrapper for Copy.
-
-	OUT dest  - memory address in which to copy bytes.
-	IN source - source memory address.
-	IN size   - number of bytes to copy.
-
-    Return    - returns dest + size.
-  */
-  void *_copy2(void *dest, const void *source, SIZE_T size);
-
-  /*
     Copy a block of memory with automatic memory allocation for a copy.
 
 	IN source - source memory address.
@@ -185,30 +154,6 @@ namespace Mem
   void ASM_INTERNAL_DEF _set(void *mem, char c, SIZE_T size);
 
   /*
-    Look for a character in a block of memory from left to right.
-
-    IN mem  - memory block to be searched.
-    IN c    - searching character.
-    IN size - the number of bytes to search.
-
-    Return  - If successful, a pointer to a character,
-              in the case of an error NULL.
-  */
-  void *_getL(void *mem, char c, SIZE_T size);
-
-  /*
-    Look for a character in a block of memory from right to left.
-
-    IN mem  - memory block to be searched.
-    IN c    - searching character.
-    IN size - the number of bytes to search.
-
-    Return  - If successful, a pointer to a character,
-			  in the case of an error NULL.
-  */
-  void *_getR(void *mem, char c, SIZE_T size);
-
-  /*
     Substitutes one byte to another memory block.
   
     IN mem     - the memory block to be searched.
@@ -239,27 +184,4 @@ namespace Mem
   */
   void _swap(void *mem1, void *mem2, SIZE_T size);
 
-  /*
-    Replacement of DWORD values.
-
-    IN originalValue - original value.
-    IN newValue      - new value.
-    IN OUT mem       - memory block to process.
-    IN memSize       - size of mem block.
-
-    Return           - number of changes performed.
-  */
-  SIZE_T _replaceDword(DWORD originalValue, DWORD newValue, void *mem, SIZE_T memSize);
-
-  /*
-    Replacement of QDWORD (DWORD64) values.
-
-	IN originalValue - original value.
-	IN newValue      - new value.
-	IN OUT mem       - memory block to process.
-	IN memSize       - size of mem block.
-
-	Return           - number of changes performed.
-  */
-  SIZE_T _replaceQword(DWORD64 originalValue, DWORD64 newValue, void *mem, SIZE_T memSize);
 };

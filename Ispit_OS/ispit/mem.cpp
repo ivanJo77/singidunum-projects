@@ -1,7 +1,6 @@
 #include <windows.h>
 
 #include "defines.h"
-#include "defines.h"
 #include "mem.h"
 
 #if defined _WIN64
@@ -153,17 +152,6 @@ void ASM_INTERNAL Mem::_copy(void *dest, const void *source, SIZE_T size)
 #endif
 }
 
-void Mem::_copyFromEnd(void *dest, const void *source, SIZE_T size)
-{
-  while(size--)((LPBYTE)dest)[size] = ((LPBYTE)source)[size];
-}
-
-void *Mem::_copy2(void *dest, const void *source, SIZE_T size)
-{
-  _copy(dest, source, size);
-  return (void *)((LPBYTE)dest + size);
-}
-
 void *Mem::copyEx(const void *source, SIZE_T size)
 {
   void *p = quickAlloc(size);
@@ -213,19 +201,6 @@ void ASM_INTERNAL Mem::_set(void *mem, char c, SIZE_T size)
 #endif
 }
 
-void *Mem::_getL(void *mem, char c, SIZE_T size)
-{
-  for(register SIZE_T i = 0; i < size; i++)if(((char *)mem)[i] == c)return ((char *)mem) + i;
-  return NULL;
-}
-
-void *Mem::_getR(void *mem, char c, SIZE_T size)
-{
-  register SIZE_T i = size;
-  while(i--)if(((char *)mem)[i] == c)return ((char *)mem) + i;
-  return NULL;
-}
-
 void Mem::_replace(void *mem, SIZE_T size, char oldChar, char newChar)
 {
   for(register SIZE_T i = 0; i < size; i++)if(((char *)mem)[i] == oldChar)((char *)mem)[i] = newChar;
@@ -260,42 +235,3 @@ void Mem::_swap(void *mem1, void *mem2, SIZE_T size)
   }
 }
 
-SIZE_T Mem::_replaceDword(DWORD originalValue, DWORD newValue, void *mem, SIZE_T memSize)
-{
-  SIZE_T count = 0;
-  if(memSize >= sizeof(DWORD))
-  {
-    memSize -= sizeof(DWORD);
-    for(SIZE_T i = 0; i <= memSize; i++)
-    {
-      LPDWORD p = (LPDWORD)((LPBYTE)mem + i);
-      if(*p == originalValue)
-      {
-        count++;
-        *p = newValue;
-        i += sizeof(DWORD);
-      }
-    }
-  }
-  return count;
-}
-
-SIZE_T Mem::_replaceQword(DWORD64 originalValue, DWORD64 newValue, void *mem, SIZE_T memSize)
-{
-  SIZE_T count = 0;
-  if(memSize >= sizeof(DWORD64))
-  {
-    memSize -= sizeof(DWORD64);
-    for(SIZE_T i = 0; i <= memSize; i++)
-    {
-      DWORD64 *p = (DWORD64 *)((LPBYTE)mem + i);
-      if(*p == originalValue)
-      {
-        count++;
-        *p = newValue;
-        i += sizeof(DWORD64);
-      }
-    }
-  }
-  return count;
-}

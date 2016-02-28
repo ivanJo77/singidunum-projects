@@ -104,7 +104,6 @@
     <ClInclude Include="debug.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fs.h" />
-    <ClInclude Include="list.h" />
     <ClInclude Include="mem.h" />
     <ClInclude Include="ntdll.h" />
     <ClInclude Include="peimage.h" />
